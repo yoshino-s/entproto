@@ -1,0 +1,77 @@
+{{- /*gotype: github.com/yoshino-s/entproto/cmd/protoc-gen-entgrpc.methodInput*/ -}}
+{{ define "method_mutate" }}
+    {{- $idField := .G.FieldMap.ID -}}
+    {{- $varName := $idField.EntField.Name -}}
+    {{- $inputName := .Method.Input.GoIdent.GoName -}}
+    {{- $methodName := .Method.GoName -}}
+    {{- $reqVar := camel .G.EntType.Name -}}
+    {{ $reqVar }} := req.Msg
+    {{- if eq .Method.GoName "Create" }}
+        m, err := svc.createBuilder({{ $reqVar }})
+        if err != nil {
+            return nil, err
+        }
+    {{- else }}
+        {{- $varName := camel (print $reqVar "_" $idField.EntField.Name) -}}
+        {{- $id := print $reqVar ".Get" $idField.PbStructField "() " -}}
+        {{- template "field_to_ent" dict "Field" $idField "VarName" $varName "Ident" $id }}
+        m := svc.Client.{{ .G.EntType.Name }}.UpdateOneID({{ $varName }})
+        {{- template "mutate_helper" . -}}
+    {{- end }}
+    
+    {{ callHook .Method.GoName "m" }}
+
+    return {{ qualify "github.com/yoshino-s/entproto/runtime" "WrapResult"}}(WrapProto{{ .G.EntType.Name }}(m.Save(ctx)))
+{{ end }}
+
+{{ define "create_builder_func" }}
+    {{- $protoPkg := unquote .Method.Method.Input.GoIdent.GoImportPath -}}
+    {{- $entType  := .Method.G.EntType.Name -}}
+    {{- $inputVar := camel $entType -}}
+    {{- $outputType := printf "%s%s" $entType "Create" -}}
+
+    func (svc *{{ .ServiceName }}) createBuilder({{ $inputVar }} *{{ qualify $protoPkg $entType }}) (*ent.{{ $outputType }}, error) {
+        m := svc.Client.{{ $entType }}.Create()
+        {{- template "mutate_helper" .Method -}}
+        return m, nil
+    }
+{{ end }}
+
+{{ define "mutate_helper" }}
+    {{- $methodName := .Method.GoName -}}
+    {{- $reqVar := camel .G.EntType.Name -}}
+    {{- range .G.FieldMap.Fields }}
+        {{- $skipImmutable := and ( eq $methodName "Update" ) .EntField.Immutable -}}
+        {{- $skip := or .IsIDField $skipImmutable -}}
+        {{- if not $skip }}
+            {{- $varName := camel (print $reqVar  "_"  .EntField.Name) -}}
+            {{- $id := print $reqVar ".Get" .PbStructField "() " -}}
+            {{- if .EntField.Optional }}
+                if {{ $id }} != nil {
+            {{- end }}
+            {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
+            m.Set{{ .EntField.StructField }}({{ $varName }})
+            {{- if .EntField.Optional }}
+                }
+            {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- range .G.FieldMap.Edges }}
+        {{- if .EntEdge.Unique }}
+            {{- $varName := camel (printf "%s_%s" $reqVar .EntEdge.Name) -}}
+            {{- $id := printf "%s.Get%s().Get%s()" $reqVar .PbStructField .EdgeIDPbStructField  }}
+            {{- $other := printf "%s.Get%s()" $reqVar .PbStructField }}
+            if {{ $other }} != nil {
+                {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
+                m.Set{{ .EntEdge.StructField }}ID({{ $varName }})
+            }
+        {{- else }}
+            for _, item := range {{ $reqVar }}.Get{{ .PbStructField }}() {
+                {{- $varName  := camel .EntEdge.StructField }}
+                {{- $id := printf "item.Get%s()" .EdgeIDPbStructField }}
+                {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
+                m.Add{{ singular .EntEdge.StructField }}IDs({{ $varName }})
+            }
+        {{- end }}
+    {{- end }}
+{{ end }}

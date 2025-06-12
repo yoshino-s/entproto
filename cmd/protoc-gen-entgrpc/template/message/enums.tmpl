@@ -1,0 +1,37 @@
+{{- /*gotype: icode.baidu.com/baidu/left/sslop-backend/tools/protoc-gen-entgrpc.messageGenerator*/ -}}
+{{ define "enums" }}
+    {{ $root := . }}
+    {{- $protoPkg := unquote .File.GoImportPath -}}
+    {{ range .FieldMap.Enums }}
+        {{ $enumType := .PbFieldDescriptor.GetEnumType }}
+        {{ $enumName := print $root.EntType.Name "_" $enumType.GetName }}
+        {{ $pbEnumIdent := $root.File.GoImportPath.Ident $enumName   }}
+        {{ $entLcase := camel $root.EntType.Name }}
+        {{ $entEnumIdent := entIdent $entLcase .PbStructField }}
+        {{ $enumFieldPrefix := snake $enumType.GetName | upper | printf "%s_" }}
+        {{ $omitPrefix := .EntField.Annotations.ProtoEnum.OmitFieldPrefix }}
+        var protoIdentNormalizeRegexp{{ $pbEnumIdent.GoName }} = {{ qualify "regexp" "MustCompile" }}(`[^a-zA-Z0-9_]+`)
+        func protoIdentNormalize{{ $pbEnumIdent.GoName }}(e string) string {
+            return protoIdentNormalizeRegexp{{ $pbEnumIdent.GoName }}.ReplaceAllString(e, "_")
+        }
+
+        func toProto{{ $pbEnumIdent.GoName }} (e {{ ident $entEnumIdent }}) {{ ident $pbEnumIdent }} {
+            if v, ok := {{ qualify $protoPkg (print $pbEnumIdent.GoName "_value") }}[{{ qualify "strings" "ToUpper" }}({{ if not $omitPrefix }}"{{ $enumFieldPrefix }}" + {{ end }}protoIdentNormalize{{ $pbEnumIdent.GoName }}(string(e)))]; ok {
+                return {{ $pbEnumIdent | ident }}(v)
+            }
+            return {{ $pbEnumIdent | ident }}(0)
+        }
+
+        func toEnt{{ $pbEnumIdent.GoName }}(e {{ ident $pbEnumIdent }}) {{ ident $entEnumIdent  }} {
+            if v, ok :=  {{ qualify $protoPkg (print $pbEnumIdent.GoName "_name") }}[int32(e)]; ok {
+                entVal := map[string]string{
+                {{- range .EntField.Enums }}
+                    "{{ if not $omitPrefix }}{{ $enumFieldPrefix }}{{ end }}{{ protoIdentNormalize .Value }}": "{{ .Value }}",
+                {{- end }}
+                }[v]
+                return {{ ident $entEnumIdent }}(entVal)
+            }
+            return ""
+        }
+    {{ end}}
+{{ end }}

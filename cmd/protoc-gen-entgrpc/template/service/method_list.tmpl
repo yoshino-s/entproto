@@ -1,0 +1,67 @@
+{{- /*gotype: github.com/yoshino-s/entproto/cmd/protoc-gen-entgrpc.methodInput*/ -}}
+{{ define "method_list" }}
+    query, totalQuery, err := svc.BuildListQuery(req)
+	{{ callHook "List" "query" }}
+	{{ callHook "ListCount" "totalQuery" }}
+
+	if err != nil {
+		return nil, wrapError(err)
+	}
+
+    items, err := WrapProto{{ .G.EntType.Name }}List(query.All(ctx))
+	if err != nil {
+		return nil, wrapError(err)
+	}
+	total, err := totalQuery.Count(ctx)
+	if err != nil {
+		return nil, wrapError(err)
+	}
+
+	return connect.NewResponse(&{{ ident .Method.Output.GoIdent }}{
+		Items: items,
+		Total: int32(total),
+	}), nil
+
+{{ end }}
+
+{{ define "build_list_query" }}
+	{{ $entLcase := camel .G.EntType.Name }}
+    snake :=  {{ qualify "entgo.io/ent/entc/gen" "Funcs" }}["snake"].(func(string) string)
+    
+    query := svc.Client.{{ .G.EntType.Name }}.Query()
+	totalQuery := svc.Client.{{ .G.EntType.Name }}.Query()
+
+    if req.Msg.Limit != nil && req.Msg.Limit.Value > 0 {
+        query = query.Limit(int(req.Msg.Limit.Value))
+    } else { // If no limit, set default limit
+		query = query.Limit(10)
+	}
+    if req.Msg.Offset != nil {
+        query = query.Offset(int(req.Msg.Offset.Value))
+    }
+    if req.Msg.Order != nil {
+		OrderFunc := ent.Asc
+		if req.Msg.Descending {
+			OrderFunc = ent.Desc
+		}
+		query = query.Order(OrderFunc(snake(req.Msg.Order.Value)))
+	}
+
+	if req.Msg.Filter != nil {
+		{{- range (getFilters .) }}
+			{{$varName := camel (print "filter_"  .Field.PbStructField)}}
+			{{$id := print "req.Msg.Filter.Get" .Field.PbStructField "()"}}
+			{{- if .Optional }}
+			if {{ $id }} != nil {
+			{{- end }}
+				{{- template "field_to_ent" dict "Field" .Field "VarName" $varName "Ident" $id }}
+				query = query.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}))
+				totalQuery = totalQuery.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}))
+			{{- if .Optional }}
+			}
+			{{- end }}
+		{{- end }}
+	}
+
+    return query, totalQuery, nil
+{{ end }}

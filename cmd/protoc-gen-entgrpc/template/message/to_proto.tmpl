@@ -1,0 +1,127 @@
+{{- /*gotype: github.com/yoshino-s/entproto/cmd/protoc-gen-entgrpc.serviceGenerator*/ -}}
+{{ define "to_proto_func" }}
+    {{- $protoPkg := unquote .File.GoImportPath -}}
+    // ToProto{{ .EntType.Name }} transforms the ent type to the pb type
+    func ToProto{{ .EntType.Name }}(e *{{ .EntPackage.Ident .EntType.Name | ident }}) (*{{ qualify $protoPkg .EntType.Name }}, error) {
+        v := &{{ qualify $protoPkg .EntType.Name }}{}
+        {{- range .FieldMap.Fields }}
+            {{- $varName := .EntField.BuilderField -}}
+            {{- $f := print "e." .EntField.StructField -}}
+            {{- if .EntField.Nillable }}
+                if {{ $f }} != nil {
+                {{- $f = print "*" $f -}}
+            {{- end }}
+            {{- template "field_to_proto" dict "Field" . "VarName" $varName "Ident" $f }}
+            v.{{ .PbStructField }} = {{ $varName }}
+            {{- if .EntField.Nillable }}
+                }
+            {{- end }}
+        {{- end }}
+        {{- range .FieldMap.Edges }}
+            {{- $varName := camel .EntEdge.Type.ID.StructField -}}
+            {{- $id := print "edg." .EntEdge.Type.ID.StructField -}}
+            {{- $name := .EntEdge.StructField -}}
+            {{- if .EntEdge.Unique }}
+                if edg := e.Edges.{{ $name }}; edg != nil {
+                    x, err := ToProto{{.EntEdge.Type.Name }}(edg)
+                    if err != nil {
+                        return nil, err
+                    }
+                    v.{{ .PbStructField }} = x
+                }
+            {{- else }}
+                {
+                    x, err := ToProto{{.EntEdge.Type.Name }}List(e.Edges.{{ $name }})
+                    if err != nil {
+                        return nil, err
+                    }
+                    v.{{ .PbStructField }} = x
+                }
+            {{- end }}
+        {{- end }}
+        return v, nil
+    }
+
+    func WrapProto{{ .EntType.Name }}(e *{{ .EntPackage.Ident .EntType.Name | ident }}, err error) (*{{ qualify $protoPkg .EntType.Name }}, error) {
+        switch {
+            case err == nil:
+                return ToProto{{ .EntType.Name }}(e)
+            case {{ .EntPackage.Ident "IsNotFound" | ident }}(err):
+                return nil, {{ statusErrf "CodeNotFound" "not found: %s" "err" }}
+            case {{ qualify "entgo.io/ent/dialect/sql/sqlgraph" "IsUniqueConstraintError" }}(err):
+                return nil, {{ statusErrf "CodeAlreadyExists" "already exists: %s" "err" }}
+            case {{ .EntPackage.Ident "IsConstraintError" | ident }}(err):
+                return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
+            default:
+                return nil, {{ statusErrf "CodeInternal" "internal error: %s" "err" }}
+        }
+    }
+{{ end }}
+
+{{ define "to_proto_list_func" }}
+    {{- $protoPkg := unquote .File.GoImportPath -}}
+    // ToProto{{ .EntType.Name }}List transforms a list of ent type to a list of pb type
+    func ToProto{{ .EntType.Name }}List(e []*{{ .EntPackage.Ident .EntType.Name | ident }}) ([]*{{ qualify $protoPkg .EntType.Name }}, error) {
+        var pbList []*{{ qualify $protoPkg .EntType.Name }}
+        for _, entEntity := range e {
+            pbEntity, err := ToProto{{ .EntType.Name }}(entEntity)
+            if err != nil {
+                return nil, {{ statusErrf "CodeInternal" "internal error: %s" "err" }}
+            }
+            pbList = append(pbList, pbEntity)
+        }
+        return pbList, nil
+    }
+
+    func WrapProto{{ .EntType.Name }}List(e []*{{ .EntPackage.Ident .EntType.Name | ident }}, err error) ([]*{{ qualify $protoPkg .EntType.Name }}, error) {
+        switch {
+            case err == nil:
+                return ToProto{{ .EntType.Name }}List(e)
+            case {{ .EntPackage.Ident "IsNotFound" | ident }}(err):
+                return nil, {{ statusErrf "CodeNotFound" "not found: %s" "err" }}
+            case {{ qualify "entgo.io/ent/dialect/sql/sqlgraph" "IsUniqueConstraintError" }}(err):
+                return nil, {{ statusErrf "CodeAlreadyExists" "already exists: %s" "err" }}
+            case {{ .EntPackage.Ident "IsConstraintError" | ident }}(err):
+                return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
+            default:
+                return nil, {{ statusErrf "CodeInternal" "internal error: %s" "err" }}
+        }
+    }
+{{ end }}
+
+{{ define "field_to_proto" }}
+    {{- $id := .Ident -}}
+    {{- $conv := newConverter .Field -}}
+    {{- if $conv.ToProtoConversion }}
+        {{- $id = print $conv.ToProtoConversion "(" $id ")" -}}
+    {{- end }}
+    {{- if $conv.ToEntMarshallerConstructor.GoName }}
+        {{ .VarName }}, err := {{ $id }}.MarshalBinary()
+        if err != nil {
+            return nil, err
+        }
+    {{- else if and $conv.ToProtoValuer $conv.ToProtoConstructor.GoName }}
+        {{ .VarName }}Value, err := {{$id}}.Value()
+        if err != nil {
+            return nil, err
+        }
+        {{ .VarName }}Typed, ok := {{ .VarName }}Value.({{ $conv.ToProtoValuer }})
+        if !ok {
+            return nil, {{ qualify "errors" "New" }}("casting value to {{ $conv.ToProtoValuer }}")
+        }
+        {{ .VarName}} := {{ ident $conv.ToProtoConstructor }}({{ .VarName}}Typed)
+    {{- else if $conv.ToProtoValuer }}
+        {{ .VarName }}Value, err := {{ $id }}.Value()
+        if err != nil {
+            return nil, err
+        }
+        {{ .VarName }}, ok := {{ .VarName }}Value.({{ $conv.ToProtoValuer }})
+        if !ok {
+            return nil, {{ qualify "errors" "New" }}("casting value to {{ $conv.ToProtoValuer }}")
+        }
+    {{- else if $conv.ToProtoConstructor.GoName }}
+        {{ .VarName }} := {{ ident $conv.ToProtoConstructor }}({{ $id }})
+    {{- else }}
+        {{ .VarName }} := {{ $id }}
+    {{- end }}
+{{- end }}
