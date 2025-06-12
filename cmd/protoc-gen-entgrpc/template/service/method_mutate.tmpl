@@ -46,12 +46,12 @@
         {{- if not $skip }}
             {{- $varName := camel (print $reqVar  "_"  .EntField.Name) -}}
             {{- $id := print $reqVar ".Get" .PbStructField "() " -}}
-            {{- if or (.EntField.Optional (and .EntField.Default (eq .EntField.Type.Type 2) ) ) }}
+            {{- if (or .EntField.Optional (and .EntField.Default (eq .EntField.Type.Type 2) ) ) }}
                 if {{ $id }} != nil {
             {{- end }}
             {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
             m.Set{{ .EntField.StructField }}({{ $varName }})
-            {{- if or (.EntField.Optional (and .EntField.Default (eq .EntField.Type.Type 2) ) ) }}
+            {{- if (or .EntField.Optional (and .EntField.Default (eq .EntField.Type.Type 2) ) ) }}
                 }
             {{- end }}
         {{- end }}
