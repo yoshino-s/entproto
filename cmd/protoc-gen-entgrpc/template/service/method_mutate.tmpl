@@ -51,7 +51,7 @@
             {{- end }}
             {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
             m.Set{{ .EntField.StructField }}({{ $varName }})
-            {{- if .EntField.Optional }}
+            {{- if or (.EntField.Optional (and .EntField.Default (eq .EntField.Type.Type 2) ) ) }}
                 }
             {{- end }}
         {{- end }}
