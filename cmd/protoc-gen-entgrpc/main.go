@@ -94,6 +94,7 @@ func processFile(gen *protogen.Plugin, file *protogen.File, graph *gen.Graph) er
 		}
 	}
 
+	svcGenerated := false
 	for _, s := range file.Services {
 		if name := string(s.Desc.Name()); !containsSvc(adapter, name) {
 			continue
@@ -105,14 +106,17 @@ func processFile(gen *protogen.Plugin, file *protogen.File, graph *gen.Graph) er
 		if err := sg.generate(); err != nil {
 			return err
 		}
+		svcGenerated = true
 	}
 
-	hg, err := newHelperGenerator(gen, file, graph, adapter, goImportPath)
-	if err != nil {
-		return err
-	}
-	if err := hg.generate(); err != nil {
-		return err
+	if svcGenerated {
+		hg, err := newHelperGenerator(gen, file, graph, adapter, goImportPath)
+		if err != nil {
+			return err
+		}
+		if err := hg.generate(); err != nil {
+			return err
+		}
 	}
 
 	return nil

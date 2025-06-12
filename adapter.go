@@ -106,6 +106,7 @@ func (a *Adapter) parse() error {
 	protoPackages := make(map[string]*descriptorpb.FileDescriptorProto)
 
 	for _, genType := range a.graph.Nodes {
+		fmt.Fprintln(os.Stderr, "Processing schema:", genType.Name)
 		messageDescriptor, err := a.toProtoMessageDescriptor(genType)
 
 		// store specific message parse failures
