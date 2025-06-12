@@ -106,7 +106,6 @@ func (a *Adapter) parse() error {
 	protoPackages := make(map[string]*descriptorpb.FileDescriptorProto)
 
 	for _, genType := range a.graph.Nodes {
-		fmt.Fprintln(os.Stderr, "Processing schema:", genType.Name)
 		messageDescriptor, err := a.toProtoMessageDescriptor(genType)
 
 		// store specific message parse failures
@@ -148,7 +147,6 @@ func (a *Adapter) parse() error {
 
 		svcAnnotation, err := extractServiceAnnotation(genType)
 		if errors.Is(err, errNoServiceDef) {
-			fmt.Fprintln(os.Stderr, "Skipping schema:", genType.Name, "no service definition found")
 			continue
 		}
 		if err != nil {
