@@ -60,7 +60,6 @@ func main() {
 
 // processFile generates service implementations from all services defined in the file.
 func processFile(gen *protogen.Plugin, file *protogen.File, graph *gen.Graph) error {
-	fmt.Fprintf(os.Stderr, "entproto: processing file %q\n", file.GeneratedFilenamePrefix)
 	adapter, err := entproto.LoadAdapter(graph)
 	if err != nil {
 		return err
@@ -96,7 +95,6 @@ func processFile(gen *protogen.Plugin, file *protogen.File, graph *gen.Graph) er
 	}
 
 	for _, s := range file.Services {
-		fmt.Fprintf(os.Stderr, "entproto: generating service %q in file %q\n", s.Desc.Name(), file.GeneratedFilenamePrefix)
 		if name := string(s.Desc.Name()); !containsSvc(adapter, name) {
 			continue
 		}

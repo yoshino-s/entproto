@@ -106,7 +106,6 @@ func (a *Adapter) parse() error {
 	protoPackages := make(map[string]*descriptorpb.FileDescriptorProto)
 
 	for _, genType := range a.graph.Nodes {
-		fmt.Fprintln(os.Stderr, "Processing schema:", genType.Name)
 		messageDescriptor, err := a.toProtoMessageDescriptor(genType)
 
 		// store specific message parse failures
@@ -163,7 +162,6 @@ func (a *Adapter) parse() error {
 			fd.MessageType = append(fd.MessageType, svcResources.svcMessages...)
 			fd.Dependency = append(fd.Dependency, "google/protobuf/empty.proto")
 		}
-		fmt.Fprintln(os.Stderr, "Processed schema:", genType.Name, "with package:", protoPkg)
 	}
 
 	// Append the well known types to the context.
@@ -176,9 +174,6 @@ func (a *Adapter) parse() error {
 	}
 
 	for _, fd := range protoPackages {
-		for _, m := range fd.MessageType {
-			fmt.Fprintln(os.Stderr, *m.Name)
-		}
 		fd.Dependency = dedupe(fd.Dependency)
 		dpbDescriptors = append(dpbDescriptors, fd)
 	}
