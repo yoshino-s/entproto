@@ -18,8 +18,6 @@ import (
 	"embed"
 	"errors"
 	"flag"
-	"fmt"
-	"os"
 	"path"
 	"path/filepath"
 
@@ -77,14 +75,12 @@ func processFile(gen *protogen.Plugin, file *protogen.File, graph *gen.Graph) er
 	))
 
 	for _, m := range file.Messages {
-		fmt.Fprintf(os.Stderr, "entproto: processing message %q in file %q\n", m.Desc.Name(), file.GeneratedFilenamePrefix)
 		if _, err := extractEntTypeNameFromMessage(m, graph); err != nil {
 			continue
 		}
 		sg, err := newMessageGenerator(gen, file, graph, adapter, m, goImportPath)
 		if err != nil {
 			if errors.Is(err, entproto.ErrSchemaSkipped) {
-				fmt.Fprintf(os.Stderr, "entproto: skipping message %q in file %q: %v\n", m.Desc.Name(), file.GeneratedFilenamePrefix, err)
 				continue
 			}
 			return err
