@@ -22,10 +22,9 @@ import (
 
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/schema/field"
-	"github.com/jhump/protoreflect/desc"
 	"github.com/yoshino-s/entproto"
 	"google.golang.org/protobuf/compiler/protogen"
-	dpb "google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var (
@@ -53,29 +52,29 @@ type converter struct {
 func (g *serviceGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*converter, error) {
 	out := &converter{}
 	pbd := fld.PbFieldDescriptor
-	switch pbd.GetType() {
-	case dpb.FieldDescriptorProto_TYPE_BOOL, dpb.FieldDescriptorProto_TYPE_STRING,
-		dpb.FieldDescriptorProto_TYPE_BYTES, dpb.FieldDescriptorProto_TYPE_INT32,
-		dpb.FieldDescriptorProto_TYPE_INT64, dpb.FieldDescriptorProto_TYPE_UINT32,
-		dpb.FieldDescriptorProto_TYPE_UINT64, dpb.FieldDescriptorProto_TYPE_FLOAT,
-		dpb.FieldDescriptorProto_TYPE_DOUBLE:
+	switch pbd.Kind() {
+	case protoreflect.BoolKind, protoreflect.StringKind,
+		protoreflect.BytesKind, protoreflect.Int32Kind,
+		protoreflect.Int64Kind, protoreflect.Uint32Kind,
+		protoreflect.Uint64Kind, protoreflect.FloatKind,
+		protoreflect.DoubleKind:
 		if err := basicTypeConversion(fld.PbFieldDescriptor, fld.EntField, out); err != nil {
 			return nil, err
 		}
-	case dpb.FieldDescriptorProto_TYPE_ENUM:
-		enumName := fld.PbFieldDescriptor.GetEnumType().GetName()
+	case protoreflect.EnumKind:
+		enumName := fld.PbFieldDescriptor.Enum().Name()
 		method := fmt.Sprintf("toProto%s_%s", g.EntType.Name, enumName)
 		out.ToProtoConstructor = g.GoImportPath.Ident(method)
-	case dpb.FieldDescriptorProto_TYPE_MESSAGE:
+	case protoreflect.MessageKind:
 		if fld.IsEdgeField {
 			if err := basicTypeConversion(fld.EdgeIDPbStructFieldDesc(), fld.EntEdge.Type.ID, out); err != nil {
 				return nil, err
 			}
-		} else if err := convertPbMessageType(pbd.GetMessageType(), fld.EntField, out); err != nil {
+		} else if err := convertPbMessageType(pbd.Message(), fld.EntField, out); err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("entproto: no mapping for pb field type %q", pbd.GetType())
+		return nil, fmt.Errorf("entproto: no mapping for pb field type %q", pbd.Kind())
 	}
 	efld := fld.EntField
 	if fld.IsEdgeField {
@@ -108,7 +107,7 @@ func (g *serviceGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*
 	case efld.IsTime():
 		out.ToEntConstructor = protogen.GoImportPath("github.com/yoshino-s/entproto/runtime").Ident("ExtractTime")
 	case efld.IsEnum():
-		enumName := fld.PbFieldDescriptor.GetEnumType().GetName()
+		enumName := fld.PbFieldDescriptor.Enum().Name()
 		method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
 		out.ToEntConstructor = g.GoImportPath.Ident(method)
 	case efld.IsJSON():
@@ -128,29 +127,29 @@ func (g *serviceGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*
 func (g *messageGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*converter, error) {
 	out := &converter{}
 	pbd := fld.PbFieldDescriptor
-	switch pbd.GetType() {
-	case dpb.FieldDescriptorProto_TYPE_BOOL, dpb.FieldDescriptorProto_TYPE_STRING,
-		dpb.FieldDescriptorProto_TYPE_BYTES, dpb.FieldDescriptorProto_TYPE_INT32,
-		dpb.FieldDescriptorProto_TYPE_INT64, dpb.FieldDescriptorProto_TYPE_UINT32,
-		dpb.FieldDescriptorProto_TYPE_UINT64, dpb.FieldDescriptorProto_TYPE_FLOAT,
-		dpb.FieldDescriptorProto_TYPE_DOUBLE:
+	switch pbd.Kind() {
+	case protoreflect.BoolKind, protoreflect.StringKind,
+		protoreflect.BytesKind, protoreflect.Int32Kind,
+		protoreflect.Int64Kind, protoreflect.Uint32Kind,
+		protoreflect.Uint64Kind, protoreflect.FloatKind,
+		protoreflect.DoubleKind:
 		if err := basicTypeConversion(fld.PbFieldDescriptor, fld.EntField, out); err != nil {
 			return nil, err
 		}
-	case dpb.FieldDescriptorProto_TYPE_ENUM:
-		enumName := fld.PbFieldDescriptor.GetEnumType().GetName()
+	case protoreflect.EnumKind:
+		enumName := fld.PbFieldDescriptor.Enum().Name()
 		method := fmt.Sprintf("toProto%s_%s", g.EntType.Name, enumName)
 		out.ToProtoConstructor = g.GoImportPath.Ident(method)
-	case dpb.FieldDescriptorProto_TYPE_MESSAGE:
+	case protoreflect.MessageKind:
 		if fld.IsEdgeField {
 			if err := basicTypeConversion(fld.EdgeIDPbStructFieldDesc(), fld.EntEdge.Type.ID, out); err != nil {
 				return nil, err
 			}
-		} else if err := convertPbMessageType(pbd.GetMessageType(), fld.EntField, out); err != nil {
+		} else if err := convertPbMessageType(pbd.Message(), fld.EntField, out); err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("entproto: no mapping for pb field type %q", pbd.GetType())
+		return nil, fmt.Errorf("entproto: no mapping for pb field type %q", pbd.Kind())
 	}
 	efld := fld.EntField
 	if fld.IsEdgeField {
@@ -183,7 +182,7 @@ func (g *messageGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*
 	case efld.IsTime():
 		out.ToEntConstructor = protogen.GoImportPath("github.com/yoshino-s/entproto/runtime").Ident("ExtractTime")
 	case efld.IsEnum():
-		enumName := fld.PbFieldDescriptor.GetEnumType().GetName()
+		enumName := fld.PbFieldDescriptor.Enum().Name()
 		method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
 		out.ToEntConstructor = g.GoImportPath.Ident(method)
 	case efld.IsJSON():
@@ -201,17 +200,17 @@ func (g *messageGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*
 }
 
 // Supported value scanner types (https://golang.org/pkg/database/sql/driver/#Value): [int64, float64, bool, []byte, string, time.Time]
-func basicTypeConversion(md *desc.FieldDescriptor, entField *gen.Field, conv *converter) error {
-	switch md.GetType() {
-	case dpb.FieldDescriptorProto_TYPE_BOOL:
+func basicTypeConversion(md protoreflect.FieldDescriptor, entField *gen.Field, conv *converter) error {
+	switch md.Kind() {
+	case protoreflect.BoolKind:
 		if entField.Type.Valuer() {
 			conv.ToProtoValuer = "bool"
 		}
-	case dpb.FieldDescriptorProto_TYPE_STRING:
+	case protoreflect.StringKind:
 		if entField.Type.Valuer() {
 			conv.ToProtoValuer = "string"
 		}
-	case dpb.FieldDescriptorProto_TYPE_BYTES:
+	case protoreflect.BytesKind:
 		if implements(entField.Type.RType, binaryMarshallerUnmarshallerType) {
 			// Ident returned from ent already has the packagename prefixed. Strip it since `g.QualifiedGoIdent`
 			// adds it back.
@@ -220,29 +219,29 @@ func basicTypeConversion(md *desc.FieldDescriptor, entField *gen.Field, conv *co
 		} else if entField.Type.Valuer() {
 			conv.ToProtoValuer = "[]byte"
 		}
-	case dpb.FieldDescriptorProto_TYPE_INT32:
+	case protoreflect.Int32Kind:
 		if entField.Type.String() != "int32" {
 			conv.ToProtoConversion = "int32"
 		}
-	case dpb.FieldDescriptorProto_TYPE_INT64:
+	case protoreflect.Int64Kind:
 		if entField.Type.Valuer() {
 			conv.ToProtoValuer = "int64"
 		} else if entField.Type.String() != "int64" {
 			conv.ToProtoConversion = "int64"
 		}
-	case dpb.FieldDescriptorProto_TYPE_UINT32:
+	case protoreflect.Uint32Kind:
 		if entField.Type.String() != "uint32" {
 			conv.ToProtoConversion = "uint32"
 		}
-	case dpb.FieldDescriptorProto_TYPE_UINT64:
+	case protoreflect.Uint64Kind:
 		if entField.Type.String() != "uint64" {
 			conv.ToProtoConversion = "uint64"
 		}
-	case dpb.FieldDescriptorProto_TYPE_FLOAT:
+	case protoreflect.FloatKind:
 		if entField.Type.String() != "float32" {
 			conv.ToProtoConversion = "float32"
 		}
-	case dpb.FieldDescriptorProto_TYPE_DOUBLE:
+	case protoreflect.DoubleKind:
 		if entField.Type.Valuer() {
 			conv.ToProtoConversion = "float64"
 		}
@@ -250,13 +249,13 @@ func basicTypeConversion(md *desc.FieldDescriptor, entField *gen.Field, conv *co
 	return nil
 }
 
-func convertPbMessageType(md *desc.MessageDescriptor, entField *gen.Field, conv *converter) error {
+func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field, conv *converter) error {
 	switch {
-	case md.GetFullyQualifiedName() == "google.protobuf.Timestamp":
+	case md.Name() == "google.protobuf.Timestamp":
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/timestamppb").Ident("New")
 	case isWrapperType(md):
-		fqn := md.GetFullyQualifiedName()
-		typ := strings.Split(fqn, ".")[2]
+		fqn := md.Name()
+		typ := strings.Split(string(fqn), ".")[2]
 		constructor := strings.TrimSuffix(typ, "Value")
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/wrapperspb").Ident(constructor)
 
@@ -268,17 +267,17 @@ func convertPbMessageType(md *desc.MessageDescriptor, entField *gen.Field, conv 
 		}
 		conv.ToEntModifier = ".GetValue()"
 	default:
-		return fmt.Errorf("entproto: no mapping for pb field type %q", md.GetFullyQualifiedName())
+		return fmt.Errorf("entproto: no mapping for pb field type %q", md.Name())
 	}
 	return nil
 }
 
-func isWrapperType(md *desc.MessageDescriptor) bool {
-	_, ok := wrapperPrimitives[md.GetFullyQualifiedName()]
+func isWrapperType(md protoreflect.MessageDescriptor) bool {
+	_, ok := wrapperPrimitives[md.Name()]
 	return ok
 }
 
-var wrapperPrimitives = map[string]string{
+var wrapperPrimitives = map[protoreflect.Name]string{
 	"google.protobuf.DoubleValue": "float64",
 	"google.protobuf.FloatValue":  "float32",
 	"google.protobuf.Int64Value":  "int64",

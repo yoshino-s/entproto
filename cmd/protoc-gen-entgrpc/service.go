@@ -9,7 +9,6 @@ import (
 
 	"entgo.io/ent/entc/gen"
 	entFieldPkg "entgo.io/ent/schema/field"
-	"github.com/jhump/protoreflect/desc"
 	"github.com/yoshino-s/entproto"
 	"google.golang.org/protobuf/compiler/protogen"
 )
@@ -100,26 +99,25 @@ func (g *serviceGenerator) generate() error {
 						}
 
 						for _, f := range field.Message.Fields {
-							f, _ := desc.WrapField(f.Desc)
-							if strings.HasSuffix(string(f.GetName()), "_contains") {
-								name := strings.TrimSuffix(string(f.GetName()), "_contains")
+							if strings.HasSuffix(string(f.Desc.Name()), "_contains") {
+								name := strings.TrimSuffix(string(f.Desc.Name()), "_contains")
 								if entField, ok := mm[name]; ok {
 									fields = append(fields, &filterField{
 										Field: &entproto.FieldMappingDescriptor{
 											EntField:          entField,
-											PbFieldDescriptor: f,
+											PbFieldDescriptor: f.Desc,
 										},
 										Operation: fmt.Sprintf("%sContains", entField.StructField()),
 										Optional:  entField.Type.Type != entFieldPkg.TypeEnum,
 									})
 								}
 							} else {
-								name := string(f.GetName())
+								name := string(f.Desc.Name())
 								if entField, ok := mm[name]; ok {
 									fields = append(fields, &filterField{
 										Field: &entproto.FieldMappingDescriptor{
 											EntField:          entField,
-											PbFieldDescriptor: f,
+											PbFieldDescriptor: f.Desc,
 										},
 										Operation: fmt.Sprintf("%sEQ", entField.StructField()),
 										Optional:  entField.Type.Type != entFieldPkg.TypeEnum,

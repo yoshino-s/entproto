@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/entc/gen"
-	"github.com/jhump/protoreflect/desc"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // FieldMap returns a FieldMap containing descriptors of all of the mappings between the ent schema field
@@ -38,7 +38,7 @@ func (a *Adapter) FieldMap(schemaName string) (FieldMap, error) {
 }
 
 // FieldMap contains a mapping between the field's name in the ent schema and a FieldMappingDescriptor.
-type FieldMap map[string]*FieldMappingDescriptor
+type FieldMap map[protoreflect.Name]*FieldMappingDescriptor
 
 // Fields returns the FieldMappingDescriptor for all of the fields of the schema. Items are sorted alphabetically
 // on pb field name.
@@ -98,16 +98,16 @@ func (m FieldMap) Enums() []*FieldMappingDescriptor {
 type FieldMappingDescriptor struct {
 	EntField          *gen.Field
 	EntEdge           *gen.Edge
-	PbFieldDescriptor *desc.FieldDescriptor
+	PbFieldDescriptor protoreflect.FieldDescriptor
 	IsEdgeField       bool
 	IsIDField         bool
 	IsEnumField       bool
-	ReferencedPbType  *desc.MessageDescriptor
+	ReferencedPbType  protoreflect.MessageDescriptor
 }
 
 // PbStructField returns the protobuf field descriptor of this field.
 func (d *FieldMappingDescriptor) PbStructField() string {
-	return camelCase(d.PbFieldDescriptor.GetName())
+	return camelCase(string(d.PbFieldDescriptor.Name()))
 }
 
 // EdgeIDPbStructField returns the name for the id field  of the
@@ -118,27 +118,28 @@ func (d *FieldMappingDescriptor) EdgeIDPbStructField() string {
 
 // EdgeIDPbStructFieldDesc returns the protobuf field descriptor for the id field
 // of the entity this edge refers to.
-func (d *FieldMappingDescriptor) EdgeIDPbStructFieldDesc() *desc.FieldDescriptor {
+func (d *FieldMappingDescriptor) EdgeIDPbStructFieldDesc() protoreflect.FieldDescriptor {
 	field := strings.Title(camel(d.EntEdge.Type.ID.Name))
-	return d.ReferencedPbType.FindFieldByName(snake(field))
+	return d.ReferencedPbType.Fields().ByName(protoreflect.Name(field))
 }
 
-func (a *Adapter) mapFields(entType *gen.Type, pbType *desc.MessageDescriptor) (FieldMap, error) {
-	m := make(map[string]*FieldMappingDescriptor)
-	for _, fld := range pbType.GetFields() {
+func (a *Adapter) mapFields(entType *gen.Type, pbType protoreflect.MessageDescriptor) (FieldMap, error) {
+	m := make(map[protoreflect.Name]*FieldMappingDescriptor)
+	for i := 0; i < pbType.Fields().Len(); i++ {
+		fld := pbType.Fields().Get(i)
 		fd := &FieldMappingDescriptor{
 			PbFieldDescriptor: fld,
-			IsIDField:         pascal(fld.GetName()) == pascal(entType.ID.Name),
-			IsEnumField:       fld.GetEnumType() != nil,
+			IsIDField:         pascal(string(fld.Name())) == pascal(entType.ID.Name),
+			IsEnumField:       fld.Enum() != nil,
 		}
 		for _, edg := range entType.Edges {
-			if fld.GetName() == edg.Name {
+			if string(fld.Name()) == edg.Name {
 				fd.IsEdgeField = true
 				break
 			}
 		}
 		if fd.IsEdgeField {
-			edg, err := extractEntEdgeByName(entType, fld.GetName())
+			edg, err := extractEntEdgeByName(entType, fld.Name())
 			if err != nil {
 				return nil, err
 			}
@@ -149,32 +150,32 @@ func (a *Adapter) mapFields(entType *gen.Type, pbType *desc.MessageDescriptor) (
 			}
 			fd.ReferencedPbType = referenced
 		} else {
-			enf, err := extractEntFieldByName(entType, fld.GetName())
+			enf, err := extractEntFieldByName(entType, fld.Name())
 			if err != nil {
 				return nil, err
 			}
 			fd.EntField = enf
 		}
-		m[fld.GetName()] = fd
+		m[fld.Name()] = fd
 	}
 	return m, nil
 }
 
-func extractEntFieldByName(entType *gen.Type, name string) (*gen.Field, error) {
-	if name == entType.ID.Name {
+func extractEntFieldByName(entType *gen.Type, name protoreflect.Name) (*gen.Field, error) {
+	if string(name) == entType.ID.Name {
 		return entType.ID, nil
 	}
 	for _, fld := range entType.Fields {
-		if fld.Name == name {
+		if fld.Name == string(name) {
 			return fld, nil
 		}
 	}
 	return nil, fmt.Errorf("entproto: could not find field %q in %q", name, entType.Name)
 }
 
-func extractEntEdgeByName(entType *gen.Type, name string) (*gen.Edge, error) {
+func extractEntEdgeByName(entType *gen.Type, name protoreflect.Name) (*gen.Edge, error) {
 	for _, edg := range entType.Edges {
-		if edg.Name == name {
+		if edg.Name == string(name) {
 			return edg, nil
 		}
 	}

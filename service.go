@@ -122,7 +122,7 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 	input := &descriptorpb.DescriptorProto{}
 	protoMessageFieldType := descriptorpb.FieldDescriptorProto_TYPE_MESSAGE
 	repeatedFieldLabel := descriptorpb.FieldDescriptorProto_LABEL_REPEATED
-	noSideEffectIdempotencyLevel := descriptorpb.MethodOptions_IDEMPOTENCY_UNKNOWN
+	noSideEffectIdempotencyLevel := descriptorpb.MethodOptions_NO_SIDE_EFFECTS
 	messages := []*descriptorpb.DescriptorProto{}
 	method := &descriptorpb.MethodDescriptorProto{}
 

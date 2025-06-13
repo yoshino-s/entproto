@@ -1,0 +1,33 @@
+{
+    "cSpell.words": [
+        "Annot",
+        "boolptr",
+        "codegen",
+        "couldnt",
+        "dedupe",
+        "descriptorpb",
+        "efld",
+        "entc",
+        "entgo",
+        "entgrpc",
+        "entpb",
+        "entproto",
+        "fann",
+        "fbuild",
+        "filedesc",
+        "jhump",
+        "multierr",
+        "protobuilder",
+        "protoc",
+        "protodesc",
+        "protogen",
+        "protoprint",
+        "protoreflect",
+        "protoutil",
+        "rotemtam",
+        "sourceinfo",
+        "strptr",
+        "wkts",
+        "wrapperspb"
+    ]
+}

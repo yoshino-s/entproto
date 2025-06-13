@@ -5,8 +5,9 @@ go 1.24.3
 require (
 	connectrpc.com/connect v1.18.1
 	entgo.io/ent v0.14.4
+	github.com/bufbuild/protocompile v0.14.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
-	github.com/jhump/protoreflect v1.17.0
+	github.com/jhump/protoreflect/v2 v2.0.0-beta.2
 	go.uber.org/multierr v1.11.0
 	google.golang.org/protobuf v1.36.6
 )
@@ -17,9 +18,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
-	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.13.0 // indirect

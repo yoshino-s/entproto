@@ -24,9 +24,9 @@ import (
 
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/desc/protoprint"
+	"github.com/jhump/protoreflect/v2/protoprint"
 	"go.uber.org/multierr"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // ExtensionOption is an option for the entproto extension.
@@ -95,7 +95,7 @@ func (e *Extension) hook() gen.Hook {
 }
 
 // Hook returns a gen.Hook that invokes Generate.
-// To use it programatically:
+// To use it pragmatically:
 //
 //	entc.Generate("./ent/schema", &gen.Config{
 //	  Hooks: []gen.Hook{
@@ -139,12 +139,12 @@ func (e *Extension) generate(g *gen.Graph) error {
 	if errs != nil {
 		return fmt.Errorf("entproto: failed parsing some schemas: %w", errs)
 	}
-	allDescriptors := make([]*desc.FileDescriptor, 0, len(adapter.AllFileDescriptors()))
+	allDescriptors := make([]protoreflect.FileDescriptor, 0, len(adapter.AllFileDescriptors()))
 	for _, filedesc := range adapter.AllFileDescriptors() {
 		allDescriptors = append(allDescriptors, filedesc)
 	}
 	// Print the .proto files.
-	var printer protoprint.Printer
+	printer := &protoprint.Printer{}
 	if err = printer.PrintProtosToFileSystem(allDescriptors, entProtoDir); err != nil {
 		return fmt.Errorf("entproto: failed writing .proto files: %w", err)
 	}
@@ -152,7 +152,7 @@ func (e *Extension) generate(g *gen.Graph) error {
 	if !e.skipGenFile {
 		// Print a generate.go file with protoc command for go file generation
 		for _, fd := range allDescriptors {
-			protoFilePath := filepath.Join(entProtoDir, fd.GetName())
+			protoFilePath := filepath.Join(entProtoDir, string(fd.Name()))
 			dir := filepath.Dir(protoFilePath)
 			genGoPath := filepath.Join(dir, "generate.go")
 			if !fileExists(genGoPath) {
@@ -184,8 +184,8 @@ func fileExists(fpath string) bool {
 	return true
 }
 
-func protocGenerateGo(fd *desc.FileDescriptor, toSchemaDir string) string {
-	levelsUp := len(strings.Split(fd.GetPackage(), "."))
+func protocGenerateGo(fd protoreflect.FileDescriptor, toSchemaDir string) string {
+	levelsUp := len(strings.Split(string(fd.Package()), "."))
 	toProtoBase := ""
 	for i := 0; i < levelsUp; i++ {
 		toProtoBase = filepath.Join("..", toProtoBase)
@@ -199,9 +199,9 @@ func protocGenerateGo(fd *desc.FileDescriptor, toSchemaDir string) string {
 		"--go-grpc_opt=paths=source_relative",
 		"--entgrpc_out=" + toProtoBase,
 		"--entgrpc_opt=paths=source_relative,schema_path=" + toSchemaDir,
-		fd.GetName(),
+		string(fd.Name()),
 	}
 	goGen := fmt.Sprintf("//go:generate %s", strings.Join(protocCmd, " "))
-	goPkgName := extractLastFqnPart(fd.GetPackage())
+	goPkgName := extractLastFqnPart(string(fd.Package()))
 	return fmt.Sprintf("package %s\n%s\n", goPkgName, goGen)
 }

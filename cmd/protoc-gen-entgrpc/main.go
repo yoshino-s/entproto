@@ -121,8 +121,10 @@ func processFile(gen *protogen.Plugin, file *protogen.File, graph *gen.Graph) er
 // containsSvc reports if the service definition for svc is created by the adapter.
 func containsSvc(adapter *entproto.Adapter, svc string) bool {
 	for _, d := range adapter.AllFileDescriptors() {
-		for _, s := range d.GetServices() {
-			if s.GetName() == svc {
+		//for _, s := range d.Services() {
+		for i := 0; i < d.Services().Len(); i++ {
+			s := d.Services().Get(i)
+			if string(s.Name()) == svc {
 				return true
 			}
 		}
