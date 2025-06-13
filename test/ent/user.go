@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/yoshino-s/entproto/test/ent/group"
 	"github.com/yoshino-s/entproto/test/ent/user"
 )
 
@@ -24,8 +25,33 @@ type User struct {
 	// Gender holds the value of the "gender" field.
 	Gender user.Gender `json:"gender,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt    time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// GroupID holds the value of the "group_id" field.
+	GroupID int `json:"group_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges        UserEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// Group holds the value of the group edge.
+	Group *Group `json:"group,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// GroupOrErr returns the Group value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) GroupOrErr() (*Group, error) {
+	if e.Group != nil {
+		return e.Group, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: group.Label}
+	}
+	return nil, &NotLoadedError{edge: "group"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -33,7 +59,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID:
+		case user.FieldID, user.FieldGroupID:
 			values[i] = new(sql.NullInt64)
 		case user.FieldName, user.FieldDescription, user.FieldGender:
 			values[i] = new(sql.NullString)
@@ -84,6 +110,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.CreatedAt = value.Time
 			}
+		case user.FieldGroupID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field group_id", values[i])
+			} else if value.Valid {
+				u.GroupID = int(value.Int64)
+			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
 		}
@@ -95,6 +127,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
+}
+
+// QueryGroup queries the "group" edge of the User entity.
+func (u *User) QueryGroup() *GroupQuery {
+	return NewUserClient(u.config).QueryGroup(u)
 }
 
 // Update returns a builder for updating this User.
@@ -131,6 +168,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("group_id=")
+	builder.WriteString(fmt.Sprintf("%v", u.GroupID))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -21,8 +22,19 @@ const (
 	FieldGender = "gender"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldGroupID holds the string denoting the group_id field in the database.
+	FieldGroupID = "group_id"
+	// EdgeGroup holds the string denoting the group edge name in mutations.
+	EdgeGroup = "group"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// GroupTable is the table that holds the group relation/edge.
+	GroupTable = "users"
+	// GroupInverseTable is the table name for the Group entity.
+	// It exists in this package in order to avoid circular dependency with the "group" package.
+	GroupInverseTable = "groups"
+	// GroupColumn is the table column denoting the group relation/edge.
+	GroupColumn = "group_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -32,6 +44,7 @@ var Columns = []string{
 	FieldDescription,
 	FieldGender,
 	FieldCreatedAt,
+	FieldGroupID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -93,4 +106,23 @@ func ByGender(opts ...sql.OrderTermOption) OrderOption {
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByGroupID orders the results by the group_id field.
+func ByGroupID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGroupID, opts...).ToFunc()
+}
+
+// ByGroupField orders the results by group field.
+func ByGroupField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newGroupStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newGroupStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(GroupInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, GroupTable, GroupColumn),
+	)
 }

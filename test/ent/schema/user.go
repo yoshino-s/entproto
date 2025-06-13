@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto"
 )
@@ -45,10 +46,24 @@ func (User) Fields() []ent.Field {
 			Annotations(
 				entproto.Field(3),
 			),
+		field.Int("group_id").
+			Optional().
+			Annotations(
+				entproto.Field(6),
+			),
 	}
 }
 
 // Edges of the User.
 func (User) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("group", Group.Type).
+			Ref("users").
+			Field("group_id").
+			Unique().
+			Annotations(
+				entproto.Field(7),
+			),
+	}
+
 }

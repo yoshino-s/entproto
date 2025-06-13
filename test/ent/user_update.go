@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/yoshino-s/entproto/test/ent/group"
 	"github.com/yoshino-s/entproto/test/ent/predicate"
 	"github.com/yoshino-s/entproto/test/ent/user"
 )
@@ -17,8 +18,9 @@ import (
 // UserUpdate is the builder for updating User entities.
 type UserUpdate struct {
 	config
-	hooks    []Hook
-	mutation *UserMutation
+	hooks     []Hook
+	mutation  *UserMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -75,9 +77,40 @@ func (uu *UserUpdate) SetNillableGender(u *user.Gender) *UserUpdate {
 	return uu
 }
 
+// SetGroupID sets the "group_id" field.
+func (uu *UserUpdate) SetGroupID(i int) *UserUpdate {
+	uu.mutation.SetGroupID(i)
+	return uu
+}
+
+// SetNillableGroupID sets the "group_id" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGroupID(i *int) *UserUpdate {
+	if i != nil {
+		uu.SetGroupID(*i)
+	}
+	return uu
+}
+
+// ClearGroupID clears the value of the "group_id" field.
+func (uu *UserUpdate) ClearGroupID() *UserUpdate {
+	uu.mutation.ClearGroupID()
+	return uu
+}
+
+// SetGroup sets the "group" edge to the Group entity.
+func (uu *UserUpdate) SetGroup(g *Group) *UserUpdate {
+	return uu.SetGroupID(g.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
+}
+
+// ClearGroup clears the "group" edge to the Group entity.
+func (uu *UserUpdate) ClearGroup() *UserUpdate {
+	uu.mutation.ClearGroup()
+	return uu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -117,6 +150,12 @@ func (uu *UserUpdate) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (uu *UserUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserUpdate {
+	uu.modifiers = append(uu.modifiers, modifiers...)
+	return uu
+}
+
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := uu.check(); err != nil {
 		return n, err
@@ -141,6 +180,36 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Gender(); ok {
 		_spec.SetField(user.FieldGender, field.TypeEnum, value)
 	}
+	if uu.mutation.GroupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.GroupTable,
+			Columns: []string{user.GroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(group.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.GroupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.GroupTable,
+			Columns: []string{user.GroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(group.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	_spec.AddModifiers(uu.modifiers...)
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -156,9 +225,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // UserUpdateOne is the builder for updating a single User entity.
 type UserUpdateOne struct {
 	config
-	fields   []string
-	hooks    []Hook
-	mutation *UserMutation
+	fields    []string
+	hooks     []Hook
+	mutation  *UserMutation
+	modifiers []func(*sql.UpdateBuilder)
 }
 
 // SetName sets the "name" field.
@@ -209,9 +279,40 @@ func (uuo *UserUpdateOne) SetNillableGender(u *user.Gender) *UserUpdateOne {
 	return uuo
 }
 
+// SetGroupID sets the "group_id" field.
+func (uuo *UserUpdateOne) SetGroupID(i int) *UserUpdateOne {
+	uuo.mutation.SetGroupID(i)
+	return uuo
+}
+
+// SetNillableGroupID sets the "group_id" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGroupID(i *int) *UserUpdateOne {
+	if i != nil {
+		uuo.SetGroupID(*i)
+	}
+	return uuo
+}
+
+// ClearGroupID clears the value of the "group_id" field.
+func (uuo *UserUpdateOne) ClearGroupID() *UserUpdateOne {
+	uuo.mutation.ClearGroupID()
+	return uuo
+}
+
+// SetGroup sets the "group" edge to the Group entity.
+func (uuo *UserUpdateOne) SetGroup(g *Group) *UserUpdateOne {
+	return uuo.SetGroupID(g.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearGroup clears the "group" edge to the Group entity.
+func (uuo *UserUpdateOne) ClearGroup() *UserUpdateOne {
+	uuo.mutation.ClearGroup()
+	return uuo
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -264,6 +365,12 @@ func (uuo *UserUpdateOne) check() error {
 	return nil
 }
 
+// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
+func (uuo *UserUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserUpdateOne {
+	uuo.modifiers = append(uuo.modifiers, modifiers...)
+	return uuo
+}
+
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if err := uuo.check(); err != nil {
 		return _node, err
@@ -305,6 +412,36 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Gender(); ok {
 		_spec.SetField(user.FieldGender, field.TypeEnum, value)
 	}
+	if uuo.mutation.GroupCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.GroupTable,
+			Columns: []string{user.GroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(group.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.GroupIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.GroupTable,
+			Columns: []string{user.GroupColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(group.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	_spec.AddModifiers(uuo.modifiers...)
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

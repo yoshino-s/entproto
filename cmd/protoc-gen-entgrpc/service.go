@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -44,6 +45,10 @@ func newServiceGenerator(plugin *protogen.Plugin, file *protogen.File, graph *ge
 func (g *serviceGenerator) generate() error {
 	tmpl, err := gen.NewTemplate("service").
 		Funcs(template.FuncMap{
+			"debug": func(v any) string {
+				fmt.Fprintf(os.Stderr, "// DEBUG: %v\n", v)
+				return ""
+			},
 			"ident":    g.QualifiedGoIdent,
 			"entIdent": g.entIdent,
 			"unquote":  func(v any) (string, error) { return strconv.Unquote(fmt.Sprint(v)) },

@@ -72,8 +72,16 @@ func (svc *UserService) Update(ctx context.Context, req *connect.Request[entpb.U
 	}
 	userGender := toEntUser_Gender(user.GetGender())
 	m.SetGender(userGender)
+	if user.GetGroupId() != nil {
+		userGroupID := int(user.GetGroupId().GetValue())
+		m.SetGroupID(userGroupID)
+	}
 	userName := user.GetName()
 	m.SetName(userName)
+	if user.GetGroup() != nil {
+		userGroup := int(user.GetGroup().GetId())
+		m.SetGroupID(userGroup)
+	}
 
 	if err := svc.RunHooks(ctx, runtime.ActionUpdate, req, m); err != nil {
 		return nil, err
@@ -170,7 +178,15 @@ func (svc *UserService) createBuilder(user *entpb.User) (*ent.UserCreate, error)
 	}
 	userGender := toEntUser_Gender(user.GetGender())
 	m.SetGender(userGender)
+	if user.GetGroupId() != nil {
+		userGroupID := int(user.GetGroupId().GetValue())
+		m.SetGroupID(userGroupID)
+	}
 	userName := user.GetName()
 	m.SetName(userName)
+	if user.GetGroup() != nil {
+		userGroup := int(user.GetGroup().GetId())
+		m.SetGroupID(userGroup)
+	}
 	return m, nil
 }

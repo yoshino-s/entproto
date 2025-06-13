@@ -9,6 +9,18 @@ import (
 	"github.com/yoshino-s/entproto/test/ent"
 )
 
+// The GroupFunc type is an adapter to allow the use of ordinary
+// function as Group mutator.
+type GroupFunc func(context.Context, *ent.GroupMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GroupFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GroupMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GroupMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

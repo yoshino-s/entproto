@@ -17,7 +17,6 @@ package entproto
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"entgo.io/ent/entc/gen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -119,7 +118,7 @@ func (d *FieldMappingDescriptor) EdgeIDPbStructField() string {
 // EdgeIDPbStructFieldDesc returns the protobuf field descriptor for the id field
 // of the entity this edge refers to.
 func (d *FieldMappingDescriptor) EdgeIDPbStructFieldDesc() protoreflect.FieldDescriptor {
-	field := strings.Title(camel(d.EntEdge.Type.ID.Name))
+	field := d.EntEdge.Type.ID.Name
 	return d.ReferencedPbType.Fields().ByName(protoreflect.Name(field))
 }
 

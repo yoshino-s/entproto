@@ -25,6 +25,8 @@ import (
 const _ = connect.IsAtLeastVersion1_13_0
 
 const (
+	// GroupServiceName is the fully-qualified name of the GroupService service.
+	GroupServiceName = "entpb.GroupService"
 	// UserServiceName is the fully-qualified name of the UserService service.
 	UserServiceName = "entpb.UserService"
 )
@@ -37,6 +39,16 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// GroupServiceCreateProcedure is the fully-qualified name of the GroupService's Create RPC.
+	GroupServiceCreateProcedure = "/entpb.GroupService/Create"
+	// GroupServiceGetProcedure is the fully-qualified name of the GroupService's Get RPC.
+	GroupServiceGetProcedure = "/entpb.GroupService/Get"
+	// GroupServiceUpdateProcedure is the fully-qualified name of the GroupService's Update RPC.
+	GroupServiceUpdateProcedure = "/entpb.GroupService/Update"
+	// GroupServiceDeleteProcedure is the fully-qualified name of the GroupService's Delete RPC.
+	GroupServiceDeleteProcedure = "/entpb.GroupService/Delete"
+	// GroupServiceListProcedure is the fully-qualified name of the GroupService's List RPC.
+	GroupServiceListProcedure = "/entpb.GroupService/List"
 	// UserServiceCreateProcedure is the fully-qualified name of the UserService's Create RPC.
 	UserServiceCreateProcedure = "/entpb.UserService/Create"
 	// UserServiceGetProcedure is the fully-qualified name of the UserService's Get RPC.
@@ -51,13 +63,195 @@ const (
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	userServiceServiceDescriptor      = entpb.File_proto_entpb_entpb_proto.Services().ByName("UserService")
-	userServiceCreateMethodDescriptor = userServiceServiceDescriptor.Methods().ByName("Create")
-	userServiceGetMethodDescriptor    = userServiceServiceDescriptor.Methods().ByName("Get")
-	userServiceUpdateMethodDescriptor = userServiceServiceDescriptor.Methods().ByName("Update")
-	userServiceDeleteMethodDescriptor = userServiceServiceDescriptor.Methods().ByName("Delete")
-	userServiceListMethodDescriptor   = userServiceServiceDescriptor.Methods().ByName("List")
+	groupServiceServiceDescriptor      = entpb.File_proto_entpb_entpb_proto.Services().ByName("GroupService")
+	groupServiceCreateMethodDescriptor = groupServiceServiceDescriptor.Methods().ByName("Create")
+	groupServiceGetMethodDescriptor    = groupServiceServiceDescriptor.Methods().ByName("Get")
+	groupServiceUpdateMethodDescriptor = groupServiceServiceDescriptor.Methods().ByName("Update")
+	groupServiceDeleteMethodDescriptor = groupServiceServiceDescriptor.Methods().ByName("Delete")
+	groupServiceListMethodDescriptor   = groupServiceServiceDescriptor.Methods().ByName("List")
+	userServiceServiceDescriptor       = entpb.File_proto_entpb_entpb_proto.Services().ByName("UserService")
+	userServiceCreateMethodDescriptor  = userServiceServiceDescriptor.Methods().ByName("Create")
+	userServiceGetMethodDescriptor     = userServiceServiceDescriptor.Methods().ByName("Get")
+	userServiceUpdateMethodDescriptor  = userServiceServiceDescriptor.Methods().ByName("Update")
+	userServiceDeleteMethodDescriptor  = userServiceServiceDescriptor.Methods().ByName("Delete")
+	userServiceListMethodDescriptor    = userServiceServiceDescriptor.Methods().ByName("List")
 )
+
+// GroupServiceClient is a client for the entpb.GroupService service.
+type GroupServiceClient interface {
+	Create(context.Context, *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error)
+	Get(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.Group], error)
+	Update(context.Context, *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error)
+	Delete(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error)
+	List(context.Context, *connect.Request[entpb.ListGroupRequest]) (*connect.Response[entpb.ListGroupResponse], error)
+}
+
+// NewGroupServiceClient constructs a client for the entpb.GroupService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewGroupServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) GroupServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &groupServiceClient{
+		create: connect.NewClient[entpb.Group, entpb.Group](
+			httpClient,
+			baseURL+GroupServiceCreateProcedure,
+			connect.WithSchema(groupServiceCreateMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		get: connect.NewClient[wrapperspb.Int32Value, entpb.Group](
+			httpClient,
+			baseURL+GroupServiceGetProcedure,
+			connect.WithSchema(groupServiceGetMethodDescriptor),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+		update: connect.NewClient[entpb.Group, entpb.Group](
+			httpClient,
+			baseURL+GroupServiceUpdateProcedure,
+			connect.WithSchema(groupServiceUpdateMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		delete: connect.NewClient[wrapperspb.Int32Value, emptypb.Empty](
+			httpClient,
+			baseURL+GroupServiceDeleteProcedure,
+			connect.WithSchema(groupServiceDeleteMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		list: connect.NewClient[entpb.ListGroupRequest, entpb.ListGroupResponse](
+			httpClient,
+			baseURL+GroupServiceListProcedure,
+			connect.WithSchema(groupServiceListMethodDescriptor),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// groupServiceClient implements GroupServiceClient.
+type groupServiceClient struct {
+	create *connect.Client[entpb.Group, entpb.Group]
+	get    *connect.Client[wrapperspb.Int32Value, entpb.Group]
+	update *connect.Client[entpb.Group, entpb.Group]
+	delete *connect.Client[wrapperspb.Int32Value, emptypb.Empty]
+	list   *connect.Client[entpb.ListGroupRequest, entpb.ListGroupResponse]
+}
+
+// Create calls entpb.GroupService.Create.
+func (c *groupServiceClient) Create(ctx context.Context, req *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
+	return c.create.CallUnary(ctx, req)
+}
+
+// Get calls entpb.GroupService.Get.
+func (c *groupServiceClient) Get(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.Group], error) {
+	return c.get.CallUnary(ctx, req)
+}
+
+// Update calls entpb.GroupService.Update.
+func (c *groupServiceClient) Update(ctx context.Context, req *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
+	return c.update.CallUnary(ctx, req)
+}
+
+// Delete calls entpb.GroupService.Delete.
+func (c *groupServiceClient) Delete(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
+	return c.delete.CallUnary(ctx, req)
+}
+
+// List calls entpb.GroupService.List.
+func (c *groupServiceClient) List(ctx context.Context, req *connect.Request[entpb.ListGroupRequest]) (*connect.Response[entpb.ListGroupResponse], error) {
+	return c.list.CallUnary(ctx, req)
+}
+
+// GroupServiceHandler is an implementation of the entpb.GroupService service.
+type GroupServiceHandler interface {
+	Create(context.Context, *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error)
+	Get(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.Group], error)
+	Update(context.Context, *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error)
+	Delete(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error)
+	List(context.Context, *connect.Request[entpb.ListGroupRequest]) (*connect.Response[entpb.ListGroupResponse], error)
+}
+
+// NewGroupServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewGroupServiceHandler(svc GroupServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	groupServiceCreateHandler := connect.NewUnaryHandler(
+		GroupServiceCreateProcedure,
+		svc.Create,
+		connect.WithSchema(groupServiceCreateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	groupServiceGetHandler := connect.NewUnaryHandler(
+		GroupServiceGetProcedure,
+		svc.Get,
+		connect.WithSchema(groupServiceGetMethodDescriptor),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	groupServiceUpdateHandler := connect.NewUnaryHandler(
+		GroupServiceUpdateProcedure,
+		svc.Update,
+		connect.WithSchema(groupServiceUpdateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	groupServiceDeleteHandler := connect.NewUnaryHandler(
+		GroupServiceDeleteProcedure,
+		svc.Delete,
+		connect.WithSchema(groupServiceDeleteMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	groupServiceListHandler := connect.NewUnaryHandler(
+		GroupServiceListProcedure,
+		svc.List,
+		connect.WithSchema(groupServiceListMethodDescriptor),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/entpb.GroupService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case GroupServiceCreateProcedure:
+			groupServiceCreateHandler.ServeHTTP(w, r)
+		case GroupServiceGetProcedure:
+			groupServiceGetHandler.ServeHTTP(w, r)
+		case GroupServiceUpdateProcedure:
+			groupServiceUpdateHandler.ServeHTTP(w, r)
+		case GroupServiceDeleteProcedure:
+			groupServiceDeleteHandler.ServeHTTP(w, r)
+		case GroupServiceListProcedure:
+			groupServiceListHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedGroupServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedGroupServiceHandler struct{}
+
+func (UnimplementedGroupServiceHandler) Create(context.Context, *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.GroupService.Create is not implemented"))
+}
+
+func (UnimplementedGroupServiceHandler) Get(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.Group], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.GroupService.Get is not implemented"))
+}
+
+func (UnimplementedGroupServiceHandler) Update(context.Context, *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.GroupService.Update is not implemented"))
+}
+
+func (UnimplementedGroupServiceHandler) Delete(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.GroupService.Delete is not implemented"))
+}
+
+func (UnimplementedGroupServiceHandler) List(context.Context, *connect.Request[entpb.ListGroupRequest]) (*connect.Response[entpb.ListGroupResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.GroupService.List is not implemented"))
+}
 
 // UserServiceClient is a client for the entpb.UserService service.
 type UserServiceClient interface {

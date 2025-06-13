@@ -6,7 +6,7 @@ import (
 	sqlgraph "entgo.io/ent/dialect/sql/sqlgraph"
 	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/test/ent"
-	user "github.com/yoshino-s/entproto/test/ent/user"
+	tagcategory "github.com/yoshino-s/entproto/test/ent/tagcategory"
 	entpb "github.com/yoshino-s/entproto/test/proto/entpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
@@ -14,59 +14,51 @@ import (
 	strings "strings"
 )
 
-var protoIdentNormalizeRegexpUser_Gender = regexp.MustCompile(`[^a-zA-Z0-9_]+`)
+var protoIdentNormalizeRegexpTagCategory_Type = regexp.MustCompile(`[^a-zA-Z0-9_]+`)
 
-func protoIdentNormalizeUser_Gender(e string) string {
-	return protoIdentNormalizeRegexpUser_Gender.ReplaceAllString(e, "_")
+func protoIdentNormalizeTagCategory_Type(e string) string {
+	return protoIdentNormalizeRegexpTagCategory_Type.ReplaceAllString(e, "_")
 }
 
-func toProtoUser_Gender(e user.Gender) entpb.User_Gender {
-	if v, ok := entpb.User_Gender_value[strings.ToUpper("GENDER_"+protoIdentNormalizeUser_Gender(string(e)))]; ok {
-		return entpb.User_Gender(v)
+func toProtoTagCategory_Type(e tagcategory.Type) entpb.TagCategory_Type {
+	if v, ok := entpb.TagCategory_Type_value[strings.ToUpper("TYPE_"+protoIdentNormalizeTagCategory_Type(string(e)))]; ok {
+		return entpb.TagCategory_Type(v)
 	}
-	return entpb.User_Gender(0)
+	return entpb.TagCategory_Type(0)
 }
 
-func toEntUser_Gender(e entpb.User_Gender) user.Gender {
-	if v, ok := entpb.User_Gender_name[int32(e)]; ok {
+func toEntTagCategory_Type(e entpb.TagCategory_Type) tagcategory.Type {
+	if v, ok := entpb.TagCategory_Type_name[int32(e)]; ok {
 		entVal := map[string]string{
-			"GENDER_MALE":   "male",
-			"GENDER_FEMALE": "female",
+			"TYPE_REPAIR_SAMPLE": "repair_sample",
 		}[v]
-		return user.Gender(entVal)
+		return tagcategory.Type(entVal)
 	}
 	return ""
 }
 
-// ToProtoUser transforms the ent type to the pb type
-func ToProtoUser(e *ent.User) (*entpb.User, error) {
-	v := &entpb.User{}
+// ToProtoTagCategory transforms the ent type to the pb type
+func ToProtoTagCategory(e *ent.TagCategory) (*entpb.TagCategory, error) {
+	v := &entpb.TagCategory{}
 	created_at := timestamppb.New(e.CreatedAt)
 	v.CreatedAt = created_at
 	description := wrapperspb.String(e.Description)
 	v.Description = description
-	gender := toProtoUser_Gender(e.Gender)
-	v.Gender = gender
-	group := wrapperspb.Int32(int32(e.GroupID))
-	v.GroupId = group
 	id := int32(e.ID)
 	v.Id = id
 	name := e.Name
 	v.Name = name
-	if edg := e.Edges.Group; edg != nil {
-		x, err := ToProtoGroup(edg)
-		if err != nil {
-			return nil, err
-		}
-		v.Group = x
-	}
+	_type := toProtoTagCategory_Type(e.Type)
+	v.Type = _type
+	updated_at := timestamppb.New(e.UpdatedAt)
+	v.UpdatedAt = updated_at
 	return v, nil
 }
 
-func WrapProtoUser(e *ent.User, err error) (*entpb.User, error) {
+func WrapProtoTagCategory(e *ent.TagCategory, err error) (*entpb.TagCategory, error) {
 	switch {
 	case err == nil:
-		return ToProtoUser(e)
+		return ToProtoTagCategory(e)
 	case ent.IsNotFound(err):
 		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
 	case sqlgraph.IsUniqueConstraintError(err):
@@ -78,11 +70,11 @@ func WrapProtoUser(e *ent.User, err error) (*entpb.User, error) {
 	}
 }
 
-// ToProtoUserList transforms a list of ent type to a list of pb type
-func ToProtoUserList(e []*ent.User) ([]*entpb.User, error) {
-	var pbList []*entpb.User
+// ToProtoTagCategoryList transforms a list of ent type to a list of pb type
+func ToProtoTagCategoryList(e []*ent.TagCategory) ([]*entpb.TagCategory, error) {
+	var pbList []*entpb.TagCategory
 	for _, entEntity := range e {
-		pbEntity, err := ToProtoUser(entEntity)
+		pbEntity, err := ToProtoTagCategory(entEntity)
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInternal, errors.Errorf("internal error: %s", err))
 		}
@@ -91,10 +83,10 @@ func ToProtoUserList(e []*ent.User) ([]*entpb.User, error) {
 	return pbList, nil
 }
 
-func WrapProtoUserList(e []*ent.User, err error) ([]*entpb.User, error) {
+func WrapProtoTagCategoryList(e []*ent.TagCategory, err error) ([]*entpb.TagCategory, error) {
 	switch {
 	case err == nil:
-		return ToProtoUserList(e)
+		return ToProtoTagCategoryList(e)
 	case ent.IsNotFound(err):
 		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
 	case sqlgraph.IsUniqueConstraintError(err):

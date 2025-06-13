@@ -6,67 +6,55 @@ import (
 	sqlgraph "entgo.io/ent/dialect/sql/sqlgraph"
 	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/test/ent"
-	user "github.com/yoshino-s/entproto/test/ent/user"
 	entpb "github.com/yoshino-s/entproto/test/proto/entpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
-	regexp "regexp"
-	strings "strings"
 )
 
-var protoIdentNormalizeRegexpUser_Gender = regexp.MustCompile(`[^a-zA-Z0-9_]+`)
-
-func protoIdentNormalizeUser_Gender(e string) string {
-	return protoIdentNormalizeRegexpUser_Gender.ReplaceAllString(e, "_")
-}
-
-func toProtoUser_Gender(e user.Gender) entpb.User_Gender {
-	if v, ok := entpb.User_Gender_value[strings.ToUpper("GENDER_"+protoIdentNormalizeUser_Gender(string(e)))]; ok {
-		return entpb.User_Gender(v)
-	}
-	return entpb.User_Gender(0)
-}
-
-func toEntUser_Gender(e entpb.User_Gender) user.Gender {
-	if v, ok := entpb.User_Gender_name[int32(e)]; ok {
-		entVal := map[string]string{
-			"GENDER_MALE":   "male",
-			"GENDER_FEMALE": "female",
-		}[v]
-		return user.Gender(entVal)
-	}
-	return ""
-}
-
-// ToProtoUser transforms the ent type to the pb type
-func ToProtoUser(e *ent.User) (*entpb.User, error) {
-	v := &entpb.User{}
+// ToProtoRepairSample transforms the ent type to the pb type
+func ToProtoRepairSample(e *ent.RepairSample) (*entpb.RepairSample, error) {
+	v := &entpb.RepairSample{}
 	created_at := timestamppb.New(e.CreatedAt)
 	v.CreatedAt = created_at
-	description := wrapperspb.String(e.Description)
-	v.Description = description
-	gender := toProtoUser_Gender(e.Gender)
-	v.Gender = gender
-	group := wrapperspb.Int32(int32(e.GroupID))
-	v.GroupId = group
+	extra := wrapperspb.String(e.Extra)
+	v.Extra = extra
 	id := int32(e.ID)
 	v.Id = id
-	name := e.Name
-	v.Name = name
-	if edg := e.Edges.Group; edg != nil {
-		x, err := ToProtoGroup(edg)
+	language := e.Language
+	v.Language = language
+	original_code := e.OriginalCode
+	v.OriginalCode = original_code
+	repaired_code := e.RepairedCode
+	v.RepairedCode = repaired_code
+	rule_name := wrapperspb.String(e.RuleName)
+	v.RuleName = rule_name
+	task := int32(e.TaskID)
+	v.TaskId = task
+	updated_at := timestamppb.New(e.UpdatedAt)
+	v.UpdatedAt = updated_at
+	vul_type := e.VulType
+	v.VulType = vul_type
+	{
+		x, err := ToProtoRepairSampleTagList(e.Edges.RepairSampleTags)
 		if err != nil {
 			return nil, err
 		}
-		v.Group = x
+		v.RepairSampleTags = x
+	}
+	if edg := e.Edges.Task; edg != nil {
+		x, err := ToProtoTask(edg)
+		if err != nil {
+			return nil, err
+		}
+		v.Task = x
 	}
 	return v, nil
 }
 
-func WrapProtoUser(e *ent.User, err error) (*entpb.User, error) {
+func WrapProtoRepairSample(e *ent.RepairSample, err error) (*entpb.RepairSample, error) {
 	switch {
 	case err == nil:
-		return ToProtoUser(e)
+		return ToProtoRepairSample(e)
 	case ent.IsNotFound(err):
 		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
 	case sqlgraph.IsUniqueConstraintError(err):
@@ -78,11 +66,11 @@ func WrapProtoUser(e *ent.User, err error) (*entpb.User, error) {
 	}
 }
 
-// ToProtoUserList transforms a list of ent type to a list of pb type
-func ToProtoUserList(e []*ent.User) ([]*entpb.User, error) {
-	var pbList []*entpb.User
+// ToProtoRepairSampleList transforms a list of ent type to a list of pb type
+func ToProtoRepairSampleList(e []*ent.RepairSample) ([]*entpb.RepairSample, error) {
+	var pbList []*entpb.RepairSample
 	for _, entEntity := range e {
-		pbEntity, err := ToProtoUser(entEntity)
+		pbEntity, err := ToProtoRepairSample(entEntity)
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInternal, errors.Errorf("internal error: %s", err))
 		}
@@ -91,10 +79,10 @@ func ToProtoUserList(e []*ent.User) ([]*entpb.User, error) {
 	return pbList, nil
 }
 
-func WrapProtoUserList(e []*ent.User, err error) ([]*entpb.User, error) {
+func WrapProtoRepairSampleList(e []*ent.RepairSample, err error) ([]*entpb.RepairSample, error) {
 	switch {
 	case err == nil:
-		return ToProtoUserList(e)
+		return ToProtoRepairSampleList(e)
 	case ent.IsNotFound(err):
 		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
 	case sqlgraph.IsUniqueConstraintError(err):

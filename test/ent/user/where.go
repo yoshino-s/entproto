@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/yoshino-s/entproto/test/ent/predicate"
 )
 
@@ -67,6 +68,11 @@ func Description(v string) predicate.User {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
+func GroupID(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldGroupID, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -267,6 +273,59 @@ func CreatedAtLT(v time.Time) predicate.User {
 // CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldCreatedAt, v))
+}
+
+// GroupIDEQ applies the EQ predicate on the "group_id" field.
+func GroupIDEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldGroupID, v))
+}
+
+// GroupIDNEQ applies the NEQ predicate on the "group_id" field.
+func GroupIDNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldGroupID, v))
+}
+
+// GroupIDIn applies the In predicate on the "group_id" field.
+func GroupIDIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldGroupID, vs...))
+}
+
+// GroupIDNotIn applies the NotIn predicate on the "group_id" field.
+func GroupIDNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldGroupID, vs...))
+}
+
+// GroupIDIsNil applies the IsNil predicate on the "group_id" field.
+func GroupIDIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldGroupID))
+}
+
+// GroupIDNotNil applies the NotNil predicate on the "group_id" field.
+func GroupIDNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldGroupID))
+}
+
+// HasGroup applies the HasEdge predicate on the "group" edge.
+func HasGroup() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, GroupTable, GroupColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasGroupWith applies the HasEdge predicate on the "group" edge with a given conditions (other predicates).
+func HasGroupWith(preds ...predicate.Group) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newGroupStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.
