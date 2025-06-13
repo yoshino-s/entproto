@@ -26,6 +26,11 @@ func (User) Fields() []ent.Field {
 			Annotations(
 				entproto.Field(2),
 			),
+		field.Time("created_at").
+			Immutable().
+			Annotations(
+				entproto.Field(3),
+			),
 	}
 }
 

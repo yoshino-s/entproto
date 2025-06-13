@@ -5,6 +5,8 @@ package entpb;
 
 import "google/protobuf/empty.proto";
 
+import "google/protobuf/timestamp.proto";
+
 import "google/protobuf/wrappers.proto";
 
 option go_package = "github.com/yoshino-s/entproto/test/proto/entpb";
@@ -13,6 +15,8 @@ message User {
   int32 id = 1;
 
   string name = 2;
+
+  google.protobuf.Timestamp created_at = 3;
 }
 
 message ListUserFilter {

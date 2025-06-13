@@ -156,6 +156,8 @@ func (svc *UserService) BuildListQuery(req *connect.Request[entpb.ListUserReques
 
 func (svc *UserService) createBuilder(user *entpb.User) (*ent.UserCreate, error) {
 	m := svc.Client.User.Create()
+	userCreatedAt := runtime.ExtractTime(user.GetCreatedAt())
+	m.SetCreatedAt(userCreatedAt)
 	userName := user.GetName()
 	m.SetName(userName)
 	return m, nil

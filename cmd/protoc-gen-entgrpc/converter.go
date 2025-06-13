@@ -251,7 +251,7 @@ func basicTypeConversion(md protoreflect.FieldDescriptor, entField *gen.Field, c
 
 func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field, conv *converter) error {
 	switch {
-	case md.Name() == "google.protobuf.Timestamp":
+	case md.FullName() == "google.protobuf.Timestamp":
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/timestamppb").Ident("New")
 	case isWrapperType(md):
 		fqn := md.Name()
@@ -267,7 +267,7 @@ func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field
 		}
 		conv.ToEntModifier = ".GetValue()"
 	default:
-		return fmt.Errorf("entproto: no mapping for pb field type %q", md.Name())
+		return fmt.Errorf("entproto(convertPbMessageType): no mapping for pb field type %q", md.Name())
 	}
 	return nil
 }
