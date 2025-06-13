@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"os"
+	"strings"
 
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
@@ -34,6 +35,9 @@ func main() {
 
 	dir, _ := os.ReadDir("./proto/entpb")
 	for _, d := range dir {
+		if d.IsDir() || !strings.HasSuffix(d.Name(), ".proto") {
+			continue
+		}
 		content, _ := os.ReadFile("./proto/entpb/" + d.Name())
 		content = bytes.ReplaceAll(content, []byte("ent/proto/entpb"), []byte("proto/entpb"))
 

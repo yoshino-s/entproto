@@ -6,6 +6,7 @@ require (
 	connectrpc.com/connect v1.18.1
 	entgo.io/ent v0.14.4
 	github.com/bufbuild/protocompile v0.14.1
+	github.com/go-errors/errors v1.5.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/jhump/protoreflect/v2 v2.0.0-beta.2
 	go.uber.org/multierr v1.11.0

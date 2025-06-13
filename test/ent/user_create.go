@@ -26,6 +26,20 @@ func (uc *UserCreate) SetName(s string) *UserCreate {
 	return uc
 }
 
+// SetDescription sets the "description" field.
+func (uc *UserCreate) SetDescription(s string) *UserCreate {
+	uc.mutation.SetDescription(s)
+	return uc
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (uc *UserCreate) SetNillableDescription(s *string) *UserCreate {
+	if s != nil {
+		uc.SetDescription(*s)
+	}
+	return uc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (uc *UserCreate) SetCreatedAt(t time.Time) *UserCreate {
 	uc.mutation.SetCreatedAt(t)
@@ -101,6 +115,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := uc.mutation.Description(); ok {
+		_spec.SetField(user.FieldDescription, field.TypeString, value)
+		_node.Description = value
 	}
 	if value, ok := uc.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

@@ -66,6 +66,10 @@ func (svc *UserService) Update(ctx context.Context, req *connect.Request[entpb.U
 	user := req.Msg
 	userID := int(user.GetId())
 	m := svc.Client.User.UpdateOneID(userID)
+	if user.GetDescription() != nil {
+		userDescription := user.GetDescription().GetValue()
+		m.SetDescription(userDescription)
+	}
 	userName := user.GetName()
 	m.SetName(userName)
 
@@ -158,6 +162,10 @@ func (svc *UserService) createBuilder(user *entpb.User) (*ent.UserCreate, error)
 	m := svc.Client.User.Create()
 	userCreatedAt := runtime.ExtractTime(user.GetCreatedAt())
 	m.SetCreatedAt(userCreatedAt)
+	if user.GetDescription() != nil {
+		userDescription := user.GetDescription().GetValue()
+		m.SetDescription(userDescription)
+	}
 	userName := user.GetName()
 	m.SetName(userName)
 	return m, nil

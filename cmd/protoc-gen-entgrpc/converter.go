@@ -254,7 +254,7 @@ func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field
 	case md.FullName() == "google.protobuf.Timestamp":
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/timestamppb").Ident("New")
 	case isWrapperType(md):
-		fqn := md.Name()
+		fqn := md.FullName()
 		typ := strings.Split(string(fqn), ".")[2]
 		constructor := strings.TrimSuffix(typ, "Value")
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/wrapperspb").Ident(constructor)
@@ -267,17 +267,17 @@ func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field
 		}
 		conv.ToEntModifier = ".GetValue()"
 	default:
-		return fmt.Errorf("entproto(convertPbMessageType): no mapping for pb field type %q", md.Name())
+		return fmt.Errorf("entproto(convertPbMessageType): no mapping for pb field type %q", md.FullName())
 	}
 	return nil
 }
 
 func isWrapperType(md protoreflect.MessageDescriptor) bool {
-	_, ok := wrapperPrimitives[md.Name()]
+	_, ok := wrapperPrimitives[md.FullName()]
 	return ok
 }
 
-var wrapperPrimitives = map[protoreflect.Name]string{
+var wrapperPrimitives = map[protoreflect.FullName]string{
 	"google.protobuf.DoubleValue": "float64",
 	"google.protobuf.FloatValue":  "float32",
 	"google.protobuf.Int64Value":  "int64",

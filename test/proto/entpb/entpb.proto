@@ -16,6 +16,8 @@ message User {
 
   string name = 2;
 
+  google.protobuf.StringValue description = 4;
+
   google.protobuf.Timestamp created_at = 3;
 }
 

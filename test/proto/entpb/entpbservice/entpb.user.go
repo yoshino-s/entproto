@@ -8,6 +8,7 @@ import (
 	ent "github.com/yoshino-s/entproto/test/ent"
 	entpb "github.com/yoshino-s/entproto/test/proto/entpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // ToProtoUser transforms the ent type to the pb type
@@ -15,6 +16,8 @@ func ToProtoUser(e *ent.User) (*entpb.User, error) {
 	v := &entpb.User{}
 	created_at := timestamppb.New(e.CreatedAt)
 	v.CreatedAt = created_at
+	description := wrapperspb.String(e.Description)
+	v.Description = description
 	id := int32(e.ID)
 	v.Id = id
 	name := e.Name

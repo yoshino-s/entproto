@@ -41,6 +41,26 @@ func (uu *UserUpdate) SetNillableName(s *string) *UserUpdate {
 	return uu
 }
 
+// SetDescription sets the "description" field.
+func (uu *UserUpdate) SetDescription(s string) *UserUpdate {
+	uu.mutation.SetDescription(s)
+	return uu
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableDescription(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetDescription(*s)
+	}
+	return uu
+}
+
+// ClearDescription clears the value of the "description" field.
+func (uu *UserUpdate) ClearDescription() *UserUpdate {
+	uu.mutation.ClearDescription()
+	return uu
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -85,6 +105,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 	}
+	if value, ok := uu.mutation.Description(); ok {
+		_spec.SetField(user.FieldDescription, field.TypeString, value)
+	}
+	if uu.mutation.DescriptionCleared() {
+		_spec.ClearField(user.FieldDescription, field.TypeString)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -116,6 +142,26 @@ func (uuo *UserUpdateOne) SetNillableName(s *string) *UserUpdateOne {
 	if s != nil {
 		uuo.SetName(*s)
 	}
+	return uuo
+}
+
+// SetDescription sets the "description" field.
+func (uuo *UserUpdateOne) SetDescription(s string) *UserUpdateOne {
+	uuo.mutation.SetDescription(s)
+	return uuo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableDescription(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetDescription(*s)
+	}
+	return uuo
+}
+
+// ClearDescription clears the value of the "description" field.
+func (uuo *UserUpdateOne) ClearDescription() *UserUpdateOne {
+	uuo.mutation.ClearDescription()
 	return uuo
 }
 
@@ -192,6 +238,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Description(); ok {
+		_spec.SetField(user.FieldDescription, field.TypeString, value)
+	}
+	if uuo.mutation.DescriptionCleared() {
+		_spec.ClearField(user.FieldDescription, field.TypeString)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues
