@@ -209,6 +209,26 @@ func DescriptionContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldDescription, v))
 }
 
+// GenderEQ applies the EQ predicate on the "gender" field.
+func GenderEQ(v Gender) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldGender, v))
+}
+
+// GenderNEQ applies the NEQ predicate on the "gender" field.
+func GenderNEQ(v Gender) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldGender, v))
+}
+
+// GenderIn applies the In predicate on the "gender" field.
+func GenderIn(vs ...Gender) predicate.User {
+	return predicate.User(sql.FieldIn(FieldGender, vs...))
+}
+
+// GenderNotIn applies the NotIn predicate on the "gender" field.
+func GenderNotIn(vs ...Gender) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldGender, vs...))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))

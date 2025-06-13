@@ -3,6 +3,8 @@
 package user
 
 import (
+	"fmt"
+
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -15,6 +17,8 @@ const (
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
+	// FieldGender holds the string denoting the gender field in the database.
+	FieldGender = "gender"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// Table holds the table name of the user in the database.
@@ -26,6 +30,7 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldDescription,
+	FieldGender,
 	FieldCreatedAt,
 }
 
@@ -37,6 +42,29 @@ func ValidColumn(column string) bool {
 		}
 	}
 	return false
+}
+
+// Gender defines the type for the "gender" enum field.
+type Gender string
+
+// Gender values.
+const (
+	GenderMale   Gender = "male"
+	GenderFemale Gender = "female"
+)
+
+func (ge Gender) String() string {
+	return string(ge)
+}
+
+// GenderValidator is a validator for the "gender" field enum values. It is called by the builders before save.
+func GenderValidator(ge Gender) error {
+	switch ge {
+	case GenderMale, GenderFemale:
+		return nil
+	default:
+		return fmt.Errorf("user: invalid enum value for gender field: %q", ge)
+	}
 }
 
 // OrderOption defines the ordering options for the User queries.
@@ -55,6 +83,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByGender orders the results by the gender field.
+func ByGender(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGender, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

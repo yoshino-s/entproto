@@ -61,6 +61,20 @@ func (uu *UserUpdate) ClearDescription() *UserUpdate {
 	return uu
 }
 
+// SetGender sets the "gender" field.
+func (uu *UserUpdate) SetGender(u user.Gender) *UserUpdate {
+	uu.mutation.SetGender(u)
+	return uu
+}
+
+// SetNillableGender sets the "gender" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableGender(u *user.Gender) *UserUpdate {
+	if u != nil {
+		uu.SetGender(*u)
+	}
+	return uu
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -93,7 +107,20 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uu *UserUpdate) check() error {
+	if v, ok := uu.mutation.Gender(); ok {
+		if err := user.GenderValidator(v); err != nil {
+			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "User.gender": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := uu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -110,6 +137,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.DescriptionCleared() {
 		_spec.ClearField(user.FieldDescription, field.TypeString)
+	}
+	if value, ok := uu.mutation.Gender(); ok {
+		_spec.SetField(user.FieldGender, field.TypeEnum, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -165,6 +195,20 @@ func (uuo *UserUpdateOne) ClearDescription() *UserUpdateOne {
 	return uuo
 }
 
+// SetGender sets the "gender" field.
+func (uuo *UserUpdateOne) SetGender(u user.Gender) *UserUpdateOne {
+	uuo.mutation.SetGender(u)
+	return uuo
+}
+
+// SetNillableGender sets the "gender" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableGender(u *user.Gender) *UserUpdateOne {
+	if u != nil {
+		uuo.SetGender(*u)
+	}
+	return uuo
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -210,7 +254,20 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uuo *UserUpdateOne) check() error {
+	if v, ok := uuo.mutation.Gender(); ok {
+		if err := user.GenderValidator(v); err != nil {
+			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "User.gender": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
+	if err := uuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
 	id, ok := uuo.mutation.ID()
 	if !ok {
@@ -244,6 +301,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.DescriptionCleared() {
 		_spec.ClearField(user.FieldDescription, field.TypeString)
+	}
+	if value, ok := uuo.mutation.Gender(); ok {
+		_spec.SetField(user.FieldGender, field.TypeEnum, value)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

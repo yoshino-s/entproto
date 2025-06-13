@@ -35,6 +35,7 @@ type UserMutation struct {
 	id            *int
 	name          *string
 	description   *string
+	gender        *user.Gender
 	created_at    *time.Time
 	clearedFields map[string]struct{}
 	done          bool
@@ -225,6 +226,42 @@ func (m *UserMutation) ResetDescription() {
 	delete(m.clearedFields, user.FieldDescription)
 }
 
+// SetGender sets the "gender" field.
+func (m *UserMutation) SetGender(u user.Gender) {
+	m.gender = &u
+}
+
+// Gender returns the value of the "gender" field in the mutation.
+func (m *UserMutation) Gender() (r user.Gender, exists bool) {
+	v := m.gender
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGender returns the old "gender" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGender(ctx context.Context) (v user.Gender, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGender is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGender requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGender: %w", err)
+	}
+	return oldValue.Gender, nil
+}
+
+// ResetGender resets all changes to the "gender" field.
+func (m *UserMutation) ResetGender() {
+	m.gender = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *UserMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -295,12 +332,15 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
 	if m.description != nil {
 		fields = append(fields, user.FieldDescription)
+	}
+	if m.gender != nil {
+		fields = append(fields, user.FieldGender)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
@@ -317,6 +357,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case user.FieldDescription:
 		return m.Description()
+	case user.FieldGender:
+		return m.Gender()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -332,6 +374,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldName(ctx)
 	case user.FieldDescription:
 		return m.OldDescription(ctx)
+	case user.FieldGender:
+		return m.OldGender(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -356,6 +400,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDescription(v)
+		return nil
+	case user.FieldGender:
+		v, ok := value.(user.Gender)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGender(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -427,6 +478,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldDescription:
 		m.ResetDescription()
+		return nil
+	case user.FieldGender:
+		m.ResetGender()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()

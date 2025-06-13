@@ -70,6 +70,8 @@ func (svc *UserService) Update(ctx context.Context, req *connect.Request[entpb.U
 		userDescription := user.GetDescription().GetValue()
 		m.SetDescription(userDescription)
 	}
+	userGender := toEntUser_Gender(user.GetGender())
+	m.SetGender(userGender)
 	userName := user.GetName()
 	m.SetName(userName)
 
@@ -166,6 +168,8 @@ func (svc *UserService) createBuilder(user *entpb.User) (*ent.UserCreate, error)
 		userDescription := user.GetDescription().GetValue()
 		m.SetDescription(userDescription)
 	}
+	userGender := toEntUser_Gender(user.GetGender())
+	m.SetGender(userGender)
 	userName := user.GetName()
 	m.SetName(userName)
 	return m, nil

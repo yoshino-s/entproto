@@ -40,6 +40,12 @@ func (uc *UserCreate) SetNillableDescription(s *string) *UserCreate {
 	return uc
 }
 
+// SetGender sets the "gender" field.
+func (uc *UserCreate) SetGender(u user.Gender) *UserCreate {
+	uc.mutation.SetGender(u)
+	return uc
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (uc *UserCreate) SetCreatedAt(t time.Time) *UserCreate {
 	uc.mutation.SetCreatedAt(t)
@@ -83,6 +89,14 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
 	}
+	if _, ok := uc.mutation.Gender(); !ok {
+		return &ValidationError{Name: "gender", err: errors.New(`ent: missing required field "User.gender"`)}
+	}
+	if v, ok := uc.mutation.Gender(); ok {
+		if err := user.GenderValidator(v); err != nil {
+			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "User.gender": %w`, err)}
+		}
+	}
 	if _, ok := uc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
 	}
@@ -119,6 +133,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Description(); ok {
 		_spec.SetField(user.FieldDescription, field.TypeString, value)
 		_node.Description = value
+	}
+	if value, ok := uc.mutation.Gender(); ok {
+		_spec.SetField(user.FieldGender, field.TypeEnum, value)
+		_node.Gender = value
 	}
 	if value, ok := uc.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

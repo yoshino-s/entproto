@@ -31,6 +31,15 @@ func (User) Fields() []ent.Field {
 			Annotations(
 				entproto.Field(4),
 			),
+		field.Enum("gender").
+			Values("male", "female").
+			Annotations(
+				entproto.Field(5),
+				entproto.Enum(map[string]int32{
+					"male":   1,
+					"female": 2,
+				}),
+			),
 		field.Time("created_at").
 			Immutable().
 			Annotations(

@@ -6,10 +6,37 @@ import (
 	sqlgraph "entgo.io/ent/dialect/sql/sqlgraph"
 	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/test/ent"
+	user "github.com/yoshino-s/entproto/test/ent/user"
 	entpb "github.com/yoshino-s/entproto/test/proto/entpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+	regexp "regexp"
+	strings "strings"
 )
+
+var protoIdentNormalizeRegexpUser_Gender = regexp.MustCompile(`[^a-zA-Z0-9_]+`)
+
+func protoIdentNormalizeUser_Gender(e string) string {
+	return protoIdentNormalizeRegexpUser_Gender.ReplaceAllString(e, "_")
+}
+
+func toProtoUser_Gender(e user.Gender) entpb.User_Gender {
+	if v, ok := entpb.User_Gender_value[strings.ToUpper("GENDER_"+protoIdentNormalizeUser_Gender(string(e)))]; ok {
+		return entpb.User_Gender(v)
+	}
+	return entpb.User_Gender(0)
+}
+
+func toEntUser_Gender(e entpb.User_Gender) user.Gender {
+	if v, ok := entpb.User_Gender_name[int32(e)]; ok {
+		entVal := map[string]string{
+			"GENDER_MALE":   "male",
+			"GENDER_FEMALE": "female",
+		}[v]
+		return user.Gender(entVal)
+	}
+	return ""
+}
 
 // ToProtoUser transforms the ent type to the pb type
 func ToProtoUser(e *ent.User) (*entpb.User, error) {
@@ -18,6 +45,8 @@ func ToProtoUser(e *ent.User) (*entpb.User, error) {
 	v.CreatedAt = created_at
 	description := wrapperspb.String(e.Description)
 	v.Description = description
+	gender := toProtoUser_Gender(e.Gender)
+	v.Gender = gender
 	id := int32(e.ID)
 	v.Id = id
 	name := e.Name
