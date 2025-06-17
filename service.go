@@ -196,6 +196,11 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 				Type:     &protoMessageFieldType,
 				TypeName: strptr(filterMessage.GetName()),
 			},
+			{
+				Name:   strptr("no_limit"),
+				Number: int32ptr(6),
+				Type:   &boolFieldType,
+			},
 		}
 
 		for _, genField := range genType.Fields {

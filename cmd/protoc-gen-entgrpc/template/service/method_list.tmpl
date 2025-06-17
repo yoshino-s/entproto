@@ -31,10 +31,12 @@
     query := svc.Client.{{ .G.EntType.Name }}.Query()
 	totalQuery := svc.Client.{{ .G.EntType.Name }}.Query()
 
-    if req.Msg.Limit != nil && req.Msg.Limit.Value > 0 {
-        query = query.Limit(int(req.Msg.Limit.Value))
-    } else { // If no limit, set default limit
-		query = query.Limit(10)
+	if ! req.Msg.NoLimit {
+		if req.Msg.Limit != nil && req.Msg.Limit.Value > 0 {
+			query = query.Limit(int(req.Msg.Limit.Value))
+		} else { // If no limit, set default limit
+			query = query.Limit(10)
+		}
 	}
     if req.Msg.Offset != nil {
         query = query.Offset(int(req.Msg.Offset.Value))
