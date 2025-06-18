@@ -155,6 +155,8 @@ func (svc *UserServiceHandler) BuildListQuery(ctx context.Context, req *connect.
 			OrderFunc = ent.Desc
 		}
 		query = query.Order(OrderFunc(snake(req.Msg.Order.Value)))
+	} else {
+		query = query.Order(ent.Asc("id"))
 	}
 
 	if req.Msg.Filter != nil {
