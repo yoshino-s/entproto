@@ -93,6 +93,13 @@ func (g *serviceGenerator) generate() error {
 					query,
 				)
 			},
+			"callHook3": func(action string, query string) string {
+				return fmt.Sprintf(
+					"if err := svc.RunHooks(ctx, %s, req, %s); err != nil { return nil, nil, err }",
+					g.QualifiedGoIdent(runtimePackage.Ident("Action"+action)),
+					query,
+				)
+			},
 			"getFilters": func(m *methodInput) []*filterField {
 				for _, field := range m.Method.Input.Fields {
 					if field.Desc.Name() == "filter" {

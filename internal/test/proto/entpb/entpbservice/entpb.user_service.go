@@ -109,13 +109,7 @@ func (svc *UserService) Delete(ctx context.Context, req *connect.Request[wrapper
 // List implements UserServiceServer.List
 func (svc *UserService) List(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error) {
 
-	query, totalQuery, err := svc.BuildListQuery(req)
-	if err := svc.RunHooks(ctx, runtime.ActionList, req, query); err != nil {
-		return nil, err
-	}
-	if err := svc.RunHooks(ctx, runtime.ActionListCount, req, totalQuery); err != nil {
-		return nil, err
-	}
+	query, totalQuery, err := svc.BuildListQuery(ctx, req)
 
 	if err != nil {
 		return nil, wrapError(err)
@@ -138,7 +132,7 @@ func (svc *UserService) List(ctx context.Context, req *connect.Request[entpb.Lis
 }
 
 // List implements UserServiceServer.List
-func (svc *UserService) BuildListQuery(req *connect.Request[entpb.ListUserRequest]) (*ent.UserQuery, *ent.UserQuery, error) {
+func (svc *UserService) BuildListQuery(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*ent.UserQuery, *ent.UserQuery, error) {
 
 	snake := gen.Funcs["snake"].(func(string) string)
 
@@ -164,6 +158,13 @@ func (svc *UserService) BuildListQuery(req *connect.Request[entpb.ListUserReques
 	}
 
 	if req.Msg.Filter != nil {
+	}
+
+	if err := svc.RunHooks(ctx, runtime.ActionList, req, query); err != nil {
+		return nil, nil, err
+	}
+	if err := svc.RunHooks(ctx, runtime.ActionListCount, req, totalQuery); err != nil {
+		return nil, nil, err
 	}
 
 	return query, totalQuery, nil

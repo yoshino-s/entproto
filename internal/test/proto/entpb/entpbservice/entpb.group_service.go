@@ -99,13 +99,7 @@ func (svc *GroupService) Delete(ctx context.Context, req *connect.Request[wrappe
 // List implements GroupServiceServer.List
 func (svc *GroupService) List(ctx context.Context, req *connect.Request[entpb.ListGroupRequest]) (*connect.Response[entpb.ListGroupResponse], error) {
 
-	query, totalQuery, err := svc.BuildListQuery(req)
-	if err := svc.RunHooks(ctx, runtime.ActionList, req, query); err != nil {
-		return nil, err
-	}
-	if err := svc.RunHooks(ctx, runtime.ActionListCount, req, totalQuery); err != nil {
-		return nil, err
-	}
+	query, totalQuery, err := svc.BuildListQuery(ctx, req)
 
 	if err != nil {
 		return nil, wrapError(err)
@@ -128,7 +122,7 @@ func (svc *GroupService) List(ctx context.Context, req *connect.Request[entpb.Li
 }
 
 // List implements GroupServiceServer.List
-func (svc *GroupService) BuildListQuery(req *connect.Request[entpb.ListGroupRequest]) (*ent.GroupQuery, *ent.GroupQuery, error) {
+func (svc *GroupService) BuildListQuery(ctx context.Context, req *connect.Request[entpb.ListGroupRequest]) (*ent.GroupQuery, *ent.GroupQuery, error) {
 
 	snake := gen.Funcs["snake"].(func(string) string)
 
@@ -154,6 +148,13 @@ func (svc *GroupService) BuildListQuery(req *connect.Request[entpb.ListGroupRequ
 	}
 
 	if req.Msg.Filter != nil {
+	}
+
+	if err := svc.RunHooks(ctx, runtime.ActionList, req, query); err != nil {
+		return nil, nil, err
+	}
+	if err := svc.RunHooks(ctx, runtime.ActionListCount, req, totalQuery); err != nil {
+		return nil, nil, err
 	}
 
 	return query, totalQuery, nil

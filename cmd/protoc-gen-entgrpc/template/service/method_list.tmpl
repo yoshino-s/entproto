@@ -1,6 +1,6 @@
 {{- /*gotype: github.com/yoshino-s/entproto/cmd/protoc-gen-entgrpc.methodInput*/ -}}
 {{ define "method_list" }}
-    query, totalQuery, err := svc.BuildListQuery(req)
+    query, totalQuery, err := svc.BuildListQuery(ctx, req)
 
 	if err != nil {
 		return nil, wrapError(err)
@@ -63,8 +63,8 @@
 		{{- end }}
 	}
 
-	{{ callHook "List" "query" }}
-	{{ callHook "ListCount" "totalQuery" }}
+	{{ callHook3 "List" "query" }}
+	{{ callHook3 "ListCount" "totalQuery" }}
 
     return query, totalQuery, nil
 {{ end }}

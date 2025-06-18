@@ -45,7 +45,7 @@ package {{ .File.GoPackageName }}
 
         {{ if (eq $methodName "List") }}
             // List implements {{ $.Service.GoName }}Server.List
-            func (svc *{{ $.Service.GoName }}) BuildListQuery(req *{{ $.ConnectPackage.Ident "Request" | ident }}[{{ ident .Input.GoIdent }}]) (*{{ $.EntPackage.Ident (print $.EntType.Name "Query") | ident }}, *{{ $.EntPackage.Ident (print $.EntType.Name "Query") | ident }}, error) {
+            func (svc *{{ $.Service.GoName }}) BuildListQuery(ctx {{ qualify "context" "Context" }}, req *{{ $.ConnectPackage.Ident "Request" | ident }}[{{ ident .Input.GoIdent }}]) (*{{ $.EntPackage.Ident (print $.EntType.Name "Query") | ident }}, *{{ $.EntPackage.Ident (print $.EntType.Name "Query") | ident }}, error) {
                 {{ template "build_list_query" (method .) }}
             }
         {{ end }}
