@@ -28,6 +28,7 @@ func newServiceGenerator(plugin *protogen.Plugin, file *protogen.File, graph *ge
 	if err != nil {
 		return nil, err
 	}
+	service.GoName += "Handler"
 
 	return &serviceGenerator{
 		GoImportPath:   goImportPath,

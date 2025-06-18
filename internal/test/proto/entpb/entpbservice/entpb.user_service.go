@@ -14,24 +14,24 @@ import (
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-// UserService implements $connectHandler
-type UserService struct {
+// UserServiceHandler implements $connectHandler
+type UserServiceHandler struct {
 	*runtime.BaseService
 	*ent.Client
 }
 
-var _ entpbconnect.UserServiceHandler = (*UserService)(nil)
+var _ entpbconnect.UserServiceHandler = (*UserServiceHandler)(nil)
 
-// NewUserService returns a new UserService
-func NewUserService(client *ent.Client) *UserService {
-	return &UserService{
+// NewUserServiceHandler returns a new UserServiceHandler
+func NewUserServiceHandler(client *ent.Client) *UserServiceHandler {
+	return &UserServiceHandler{
 		BaseService: runtime.NewBaseService(),
 		Client:      client,
 	}
 }
 
-// Create implements UserServiceServer.Create
-func (svc *UserService) Create(ctx context.Context, req *connect.Request[entpb.User]) (*connect.Response[entpb.User], error) {
+// Create implements UserServiceHandlerServer.Create
+func (svc *UserServiceHandler) Create(ctx context.Context, req *connect.Request[entpb.User]) (*connect.Response[entpb.User], error) {
 	user := req.Msg
 	m, err := svc.createBuilder(user)
 	if err != nil {
@@ -46,8 +46,8 @@ func (svc *UserService) Create(ctx context.Context, req *connect.Request[entpb.U
 
 }
 
-// Get implements UserServiceServer.Get
-func (svc *UserService) Get(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.User], error) {
+// Get implements UserServiceHandlerServer.Get
+func (svc *UserServiceHandler) Get(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.User], error) {
 
 	query := svc.Client.User.Query()
 	query = query.Where(
@@ -61,8 +61,8 @@ func (svc *UserService) Get(ctx context.Context, req *connect.Request[wrapperspb
 
 }
 
-// Update implements UserServiceServer.Update
-func (svc *UserService) Update(ctx context.Context, req *connect.Request[entpb.User]) (*connect.Response[entpb.User], error) {
+// Update implements UserServiceHandlerServer.Update
+func (svc *UserServiceHandler) Update(ctx context.Context, req *connect.Request[entpb.User]) (*connect.Response[entpb.User], error) {
 	user := req.Msg
 	userID := int(user.GetId())
 	m := svc.Client.User.UpdateOneID(userID)
@@ -91,8 +91,8 @@ func (svc *UserService) Update(ctx context.Context, req *connect.Request[entpb.U
 
 }
 
-// Delete implements UserServiceServer.Delete
-func (svc *UserService) Delete(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
+// Delete implements UserServiceHandlerServer.Delete
+func (svc *UserServiceHandler) Delete(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
 
 	query := svc.Client.User.DeleteOneID(int(req.Msg.Value))
 	if err := svc.RunHooks(ctx, runtime.ActionDelete, req, query); err != nil {
@@ -106,8 +106,8 @@ func (svc *UserService) Delete(ctx context.Context, req *connect.Request[wrapper
 
 }
 
-// List implements UserServiceServer.List
-func (svc *UserService) List(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error) {
+// List implements UserServiceHandlerServer.List
+func (svc *UserServiceHandler) List(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error) {
 
 	query, totalQuery, err := svc.BuildListQuery(ctx, req)
 
@@ -131,8 +131,8 @@ func (svc *UserService) List(ctx context.Context, req *connect.Request[entpb.Lis
 
 }
 
-// List implements UserServiceServer.List
-func (svc *UserService) BuildListQuery(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*ent.UserQuery, *ent.UserQuery, error) {
+// List implements UserServiceHandlerServer.List
+func (svc *UserServiceHandler) BuildListQuery(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*ent.UserQuery, *ent.UserQuery, error) {
 
 	snake := gen.Funcs["snake"].(func(string) string)
 
@@ -171,7 +171,7 @@ func (svc *UserService) BuildListQuery(ctx context.Context, req *connect.Request
 
 }
 
-func (svc *UserService) createBuilder(user *entpb.User) (*ent.UserCreate, error) {
+func (svc *UserServiceHandler) createBuilder(user *entpb.User) (*ent.UserCreate, error) {
 	m := svc.Client.User.Create()
 	userCreatedAt := runtime.ExtractTime(user.GetCreatedAt())
 	m.SetCreatedAt(userCreatedAt)

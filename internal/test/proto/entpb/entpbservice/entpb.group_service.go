@@ -14,24 +14,24 @@ import (
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-// GroupService implements $connectHandler
-type GroupService struct {
+// GroupServiceHandler implements $connectHandler
+type GroupServiceHandler struct {
 	*runtime.BaseService
 	*ent.Client
 }
 
-var _ entpbconnect.GroupServiceHandler = (*GroupService)(nil)
+var _ entpbconnect.GroupServiceHandler = (*GroupServiceHandler)(nil)
 
-// NewGroupService returns a new GroupService
-func NewGroupService(client *ent.Client) *GroupService {
-	return &GroupService{
+// NewGroupServiceHandler returns a new GroupServiceHandler
+func NewGroupServiceHandler(client *ent.Client) *GroupServiceHandler {
+	return &GroupServiceHandler{
 		BaseService: runtime.NewBaseService(),
 		Client:      client,
 	}
 }
 
-// Create implements GroupServiceServer.Create
-func (svc *GroupService) Create(ctx context.Context, req *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
+// Create implements GroupServiceHandlerServer.Create
+func (svc *GroupServiceHandler) Create(ctx context.Context, req *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
 	group := req.Msg
 	m, err := svc.createBuilder(group)
 	if err != nil {
@@ -46,8 +46,8 @@ func (svc *GroupService) Create(ctx context.Context, req *connect.Request[entpb.
 
 }
 
-// Get implements GroupServiceServer.Get
-func (svc *GroupService) Get(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.Group], error) {
+// Get implements GroupServiceHandlerServer.Get
+func (svc *GroupServiceHandler) Get(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.Group], error) {
 
 	query := svc.Client.Group.Query()
 	query = query.Where(
@@ -61,8 +61,8 @@ func (svc *GroupService) Get(ctx context.Context, req *connect.Request[wrappersp
 
 }
 
-// Update implements GroupServiceServer.Update
-func (svc *GroupService) Update(ctx context.Context, req *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
+// Update implements GroupServiceHandlerServer.Update
+func (svc *GroupServiceHandler) Update(ctx context.Context, req *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
 	group := req.Msg
 	groupID := int(group.GetId())
 	m := svc.Client.Group.UpdateOneID(groupID)
@@ -81,8 +81,8 @@ func (svc *GroupService) Update(ctx context.Context, req *connect.Request[entpb.
 
 }
 
-// Delete implements GroupServiceServer.Delete
-func (svc *GroupService) Delete(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
+// Delete implements GroupServiceHandlerServer.Delete
+func (svc *GroupServiceHandler) Delete(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
 
 	query := svc.Client.Group.DeleteOneID(int(req.Msg.Value))
 	if err := svc.RunHooks(ctx, runtime.ActionDelete, req, query); err != nil {
@@ -96,8 +96,8 @@ func (svc *GroupService) Delete(ctx context.Context, req *connect.Request[wrappe
 
 }
 
-// List implements GroupServiceServer.List
-func (svc *GroupService) List(ctx context.Context, req *connect.Request[entpb.ListGroupRequest]) (*connect.Response[entpb.ListGroupResponse], error) {
+// List implements GroupServiceHandlerServer.List
+func (svc *GroupServiceHandler) List(ctx context.Context, req *connect.Request[entpb.ListGroupRequest]) (*connect.Response[entpb.ListGroupResponse], error) {
 
 	query, totalQuery, err := svc.BuildListQuery(ctx, req)
 
@@ -121,8 +121,8 @@ func (svc *GroupService) List(ctx context.Context, req *connect.Request[entpb.Li
 
 }
 
-// List implements GroupServiceServer.List
-func (svc *GroupService) BuildListQuery(ctx context.Context, req *connect.Request[entpb.ListGroupRequest]) (*ent.GroupQuery, *ent.GroupQuery, error) {
+// List implements GroupServiceHandlerServer.List
+func (svc *GroupServiceHandler) BuildListQuery(ctx context.Context, req *connect.Request[entpb.ListGroupRequest]) (*ent.GroupQuery, *ent.GroupQuery, error) {
 
 	snake := gen.Funcs["snake"].(func(string) string)
 
@@ -161,7 +161,7 @@ func (svc *GroupService) BuildListQuery(ctx context.Context, req *connect.Reques
 
 }
 
-func (svc *GroupService) createBuilder(group *entpb.Group) (*ent.GroupCreate, error) {
+func (svc *GroupServiceHandler) createBuilder(group *entpb.Group) (*ent.GroupCreate, error) {
 	m := svc.Client.Group.Create()
 	groupName := group.GetName()
 	m.SetName(groupName)

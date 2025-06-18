@@ -6,7 +6,6 @@ package {{ .File.GoPackageName }}
 {{- if gt (len .Service.Methods) 0 }}
 
     {{ $connectPkg := print (unquote .File.GoImportPath.String) "/" (removeSuffix (print .File.GoPackageName) "service") "connect" }}
-    {{ $connectHandler := print .Service.GoName "Handler" }}
 
     // {{ .Service.GoName }} implements $connectHandler
     type {{ .Service.GoName }} struct {
@@ -14,7 +13,7 @@ package {{ .File.GoPackageName }}
         *{{ .EntPackage.Ident "Client" | ident }}
     }
 
-    var _ {{ qualify $connectPkg $connectHandler }} = (*{{ .Service.GoName }})(nil)
+    var _ {{ qualify $connectPkg .Service.GoName }} = (*{{ .Service.GoName }})(nil)
 
     // New{{ .Service.GoName }} returns a new {{ .Service.GoName }}
     func New{{ .Service.GoName }}(client *{{ .EntPackage.Ident "Client" | ident }}) *{{ .Service.GoName }} {
