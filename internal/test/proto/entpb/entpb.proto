@@ -67,6 +67,19 @@ message User {
 }
 
 message ListUserFilter {
+  google.protobuf.StringValue name = 1;
+
+  google.protobuf.StringValue name_contains = 2;
+
+  repeated google.protobuf.StringValue name_in = 3;
+
+  User.Gender gender = 4;
+
+  repeated User.Gender gender_in = 5;
+
+  google.protobuf.Timestamp created_at = 6;
+
+  repeated google.protobuf.Timestamp created_at_in = 7;
 }
 
 message ListUserRequest {

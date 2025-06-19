@@ -53,14 +53,24 @@
 		{{- range (getFilters .) }}
 			{{$varName := camel (print "filter_"  .Field.PbStructField)}}
 			{{$id := print "req.Msg.Filter.Get" .Field.PbStructField "()"}}
-			{{- if .Optional }}
-			if {{ $id }} != nil {
-			{{- end }}
-				{{- template "field_to_ent" dict "Field" .Field "VarName" $varName "Ident" $id }}
-				query = query.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}))
-				totalQuery = totalQuery.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}))
-			{{- if .Optional }}
-			}
+			{{- if hasSuffix .Operation "In" }}
+			    {{ $varName }}s := []{{ .Field.EntField.Type.String }}{}
+			    for _, item := range {{ $id }} {
+			    	{{- template "field_to_ent" dict "Field" .Field "VarName" $varName "Ident" "item" }}
+					{{ $varName }}s = append({{ $varName }}s, {{ $varName }})
+				}
+				query = query.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}s...))
+				totalQuery = totalQuery.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}s...))
+			{{- else }}
+				{{- if .Optional }}
+				if {{ $id }} != nil {
+				{{- end }}
+					{{- template "field_to_ent" dict "Field" .Field "VarName" $varName "Ident" $id }}
+					query = query.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}))
+					totalQuery = totalQuery.Where({{ entIdent $entLcase .Operation | ident }}({{ $varName }}))
+				{{- if .Optional }}
+				}
+				{{- end }}
 			{{- end }}
 		{{- end }}
 	}

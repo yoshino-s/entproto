@@ -27,11 +27,18 @@ func FilterContains() FilterOption {
 	}
 }
 
+func WithFilterMode(mode FilterMode) FilterOption {
+	return func(f *filter) {
+		f.Mode = mode
+	}
+}
+
 type FilterMode int
 
 const (
-	FilterModeEQ FilterMode = iota
+	FilterModeEQ FilterMode = 1 << iota
 	FilterModeContains
+	FilterModeIn
 )
 
 type filter struct {

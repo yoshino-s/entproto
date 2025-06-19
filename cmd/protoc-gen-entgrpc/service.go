@@ -101,6 +101,9 @@ func (g *serviceGenerator) generate() error {
 					query,
 				)
 			},
+			"hasSuffix": func(s, suffix string) bool {
+				return strings.HasSuffix(s, suffix)
+			},
 			"getFilters": func(m *methodInput) []*filterField {
 				for _, field := range m.Method.Input.Fields {
 					if field.Desc.Name() == "filter" {
@@ -112,7 +115,26 @@ func (g *serviceGenerator) generate() error {
 						}
 
 						for _, f := range field.Message.Fields {
-							if strings.HasSuffix(string(f.Desc.Name()), "_contains") {
+							if strings.HasSuffix(string(f.Desc.Name()), "_in") {
+								name := strings.TrimSuffix(string(f.Desc.Name()), "_in")
+								if entField, ok := mm[name]; ok {
+									typ := entField.Type.Type.String()
+									if entField.Type.Type == entFieldPkg.TypeTime {
+										typ = g.QualifiedGoIdent(protogen.GoImportPath("time").Ident("Time"))
+									} else if entField.Type.Type == entFieldPkg.TypeJSON {
+										typ = g.QualifiedGoIdent(protogen.GoImportPath("encoding/json").Ident("RawMessage"))
+									}
+									fields = append(fields, &filterField{
+										Field: &entproto.FieldMappingDescriptor{
+											EntField:          entField,
+											PbFieldDescriptor: f.Desc,
+										},
+										Operation: fmt.Sprintf("%sIn", entField.StructField()),
+										Optional:  entField.Type.Type != entFieldPkg.TypeEnum,
+										Type:      typ,
+									})
+								}
+							} else if strings.HasSuffix(string(f.Desc.Name()), "_contains") {
 								name := strings.TrimSuffix(string(f.Desc.Name()), "_contains")
 								if entField, ok := mm[name]; ok {
 									fields = append(fields, &filterField{
@@ -175,6 +197,7 @@ type (
 		Field     *entproto.FieldMappingDescriptor
 		Operation string
 		Optional  bool
+		Type      string
 	}
 )
 

@@ -224,19 +224,33 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 				if genField.Type.Type == field.TypeEnum {
 					fieldType.messageName = fmt.Sprintf("%s.%s", genType.Name, fieldType.messageName)
 				}
-				if filterAnnotation.Mode == FilterModeContains {
+				if filterAnnotation.Mode&FilterModeEQ != 0 {
+					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
+						Name:     strptr(snake(genField.Name)),
+						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
+						Type:     &fieldType.protoType,
+						TypeName: strptr(fieldType.messageName),
+					})
+				}
+				if filterAnnotation.Mode&FilterModeContains != 0 {
+					if genField.Type.Type != field.TypeString {
+						return methodResources{}, fmt.Errorf("entproto: contains filter mode is only supported for string fields, schema %q field %q has type %q",
+							genType.Name, genField.Name, genField.Type.Type)
+					}
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(fmt.Sprintf("%s_contains", snake(genField.Name))),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
 						Type:     &fieldType.protoType,
 						TypeName: strptr(fieldType.messageName),
 					})
-				} else if filterAnnotation.Mode == FilterModeEQ {
+				}
+				if filterAnnotation.Mode&FilterModeIn != 0 {
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
-						Name:     strptr(snake(genField.Name)),
+						Name:     strptr(fmt.Sprintf("%s_in", snake(genField.Name))),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
 						Type:     &fieldType.protoType,
 						TypeName: strptr(fieldType.messageName),
+						Label:    &repeatedFieldLabel,
 					})
 				}
 			}

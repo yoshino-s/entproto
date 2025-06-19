@@ -12,6 +12,7 @@ import (
 	runtime "github.com/yoshino-s/entproto/runtime"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+	time "time"
 )
 
 // UserServiceHandler implements $connectHandler
@@ -160,6 +161,52 @@ func (svc *UserServiceHandler) BuildListQuery(ctx context.Context, req *connect.
 	}
 
 	if req.Msg.Filter != nil {
+
+		if req.Msg.Filter.GetName() != nil {
+			filterName := req.Msg.Filter.GetName().GetValue()
+			query = query.Where(user.NameEQ(filterName))
+			totalQuery = totalQuery.Where(user.NameEQ(filterName))
+		}
+
+		if req.Msg.Filter.GetNameContains() != nil {
+			filterNameContains := req.Msg.Filter.GetNameContains().GetValue()
+			query = query.Where(user.NameContains(filterNameContains))
+			totalQuery = totalQuery.Where(user.NameContains(filterNameContains))
+		}
+
+		filterNameIns := []string{}
+		for _, item := range req.Msg.Filter.GetNameIn() {
+			filterNameIn := item.GetValue()
+			filterNameIns = append(filterNameIns, filterNameIn)
+		}
+		query = query.Where(user.NameIn(filterNameIns...))
+		totalQuery = totalQuery.Where(user.NameIn(filterNameIns...))
+
+		filterGender := toEntUser_Gender(req.Msg.Filter.GetGender())
+		query = query.Where(user.GenderEQ(filterGender))
+		totalQuery = totalQuery.Where(user.GenderEQ(filterGender))
+
+		filterGenderIns := []user.Gender{}
+		for _, item := range req.Msg.Filter.GetGenderIn() {
+			filterGenderIn := toEntUser_Gender(item)
+			filterGenderIns = append(filterGenderIns, filterGenderIn)
+		}
+		query = query.Where(user.GenderIn(filterGenderIns...))
+		totalQuery = totalQuery.Where(user.GenderIn(filterGenderIns...))
+
+		if req.Msg.Filter.GetCreatedAt() != nil {
+			filterCreatedAt := runtime.ExtractTime(req.Msg.Filter.GetCreatedAt())
+			query = query.Where(user.CreatedAtEQ(filterCreatedAt))
+			totalQuery = totalQuery.Where(user.CreatedAtEQ(filterCreatedAt))
+		}
+
+		filterCreatedAtIns := []time.Time{}
+		for _, item := range req.Msg.Filter.GetCreatedAtIn() {
+			filterCreatedAtIn := runtime.ExtractTime(item)
+			filterCreatedAtIns = append(filterCreatedAtIns, filterCreatedAtIn)
+		}
+		query = query.Where(user.CreatedAtIn(filterCreatedAtIns...))
+		totalQuery = totalQuery.Where(user.CreatedAtIn(filterCreatedAtIns...))
 	}
 
 	if err := svc.RunHooks(ctx, runtime.ActionList, req, query); err != nil {

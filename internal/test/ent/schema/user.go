@@ -26,6 +26,7 @@ func (User) Fields() []ent.Field {
 		field.String("name").
 			Annotations(
 				entproto.Field(2),
+				entproto.Filter(entproto.WithFilterMode(entproto.FilterModeContains|entproto.FilterModeEQ|entproto.FilterModeIn)),
 			),
 		field.String("description").
 			Optional().
@@ -40,11 +41,13 @@ func (User) Fields() []ent.Field {
 					"male":   1,
 					"female": 2,
 				}),
+				entproto.Filter(entproto.WithFilterMode(entproto.FilterModeEQ|entproto.FilterModeIn)),
 			),
 		field.Time("created_at").
 			Immutable().
 			Annotations(
 				entproto.Field(3),
+				entproto.Filter(entproto.WithFilterMode(entproto.FilterModeEQ|entproto.FilterModeIn)),
 			),
 		field.Int("group_id").
 			Optional().
