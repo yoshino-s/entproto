@@ -204,25 +204,29 @@ func (svc *UserServiceHandler) BuildListQuery(ctx context.Context, req *connect.
 			totalQuery = totalQuery.Where(user.NameContains(filterNameContains))
 		}
 
-		filterNameIns := []string{}
-		for _, item := range req.Msg.Filter.GetNameIn() {
-			filterNameIn := item.GetValue()
-			filterNameIns = append(filterNameIns, filterNameIn)
+		if req.Msg.Filter.GetNameIn() != nil {
+			filterNameIns := []string{}
+			for _, item := range req.Msg.Filter.GetNameIn() {
+				filterNameIn := item.GetValue()
+				filterNameIns = append(filterNameIns, filterNameIn)
+			}
+			query = query.Where(user.NameIn(filterNameIns...))
+			totalQuery = totalQuery.Where(user.NameIn(filterNameIns...))
 		}
-		query = query.Where(user.NameIn(filterNameIns...))
-		totalQuery = totalQuery.Where(user.NameIn(filterNameIns...))
 
 		filterGender := toEntUser_Gender(req.Msg.Filter.GetGender())
 		query = query.Where(user.GenderEQ(filterGender))
 		totalQuery = totalQuery.Where(user.GenderEQ(filterGender))
 
-		filterGenderIns := []user.Gender{}
-		for _, item := range req.Msg.Filter.GetGenderIn() {
-			filterGenderIn := toEntUser_Gender(item)
-			filterGenderIns = append(filterGenderIns, filterGenderIn)
+		if req.Msg.Filter.GetGenderIn() != nil {
+			filterGenderIns := []user.Gender{}
+			for _, item := range req.Msg.Filter.GetGenderIn() {
+				filterGenderIn := toEntUser_Gender(item)
+				filterGenderIns = append(filterGenderIns, filterGenderIn)
+			}
+			query = query.Where(user.GenderIn(filterGenderIns...))
+			totalQuery = totalQuery.Where(user.GenderIn(filterGenderIns...))
 		}
-		query = query.Where(user.GenderIn(filterGenderIns...))
-		totalQuery = totalQuery.Where(user.GenderIn(filterGenderIns...))
 
 		if req.Msg.Filter.GetCreatedAt() != nil {
 			filterCreatedAt := runtime.ExtractTime(req.Msg.Filter.GetCreatedAt())
@@ -230,13 +234,15 @@ func (svc *UserServiceHandler) BuildListQuery(ctx context.Context, req *connect.
 			totalQuery = totalQuery.Where(user.CreatedAtEQ(filterCreatedAt))
 		}
 
-		filterCreatedAtIns := []time.Time{}
-		for _, item := range req.Msg.Filter.GetCreatedAtIn() {
-			filterCreatedAtIn := runtime.ExtractTime(item)
-			filterCreatedAtIns = append(filterCreatedAtIns, filterCreatedAtIn)
+		if req.Msg.Filter.GetCreatedAtIn() != nil {
+			filterCreatedAtIns := []time.Time{}
+			for _, item := range req.Msg.Filter.GetCreatedAtIn() {
+				filterCreatedAtIn := runtime.ExtractTime(item)
+				filterCreatedAtIns = append(filterCreatedAtIns, filterCreatedAtIn)
+			}
+			query = query.Where(user.CreatedAtIn(filterCreatedAtIns...))
+			totalQuery = totalQuery.Where(user.CreatedAtIn(filterCreatedAtIns...))
 		}
-		query = query.Where(user.CreatedAtIn(filterCreatedAtIns...))
-		totalQuery = totalQuery.Where(user.CreatedAtIn(filterCreatedAtIns...))
 	}
 
 	if err := svc.RunHooks(ctx, runtime.ActionList, req, query); err != nil {
