@@ -71,7 +71,7 @@ message ListUserFilter {
 
   google.protobuf.StringValue name_contains = 2;
 
-  repeated google.protobuf.StringValue name_in = 3;
+  repeated string name_in = 3;
 
   User.Gender gender = 4;
 

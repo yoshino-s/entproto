@@ -207,7 +207,7 @@ func (svc *UserServiceHandler) BuildListQuery(ctx context.Context, req *connect.
 		if req.Msg.Filter.GetNameIn() != nil {
 			filterNameIns := []string{}
 			for _, item := range req.Msg.Filter.GetNameIn() {
-				filterNameIn := item.GetValue()
+				filterNameIn := item
 				filterNameIns = append(filterNameIns, filterNameIn)
 			}
 			query = query.Where(user.NameIn(filterNameIns...))

@@ -215,21 +215,29 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 				if genField.Type.Type != field.TypeEnum {
 					genField.Optional = true
 				}
-				fieldType, err := extractProtoTypeDetails(genField)
+				optionalFieldType, err := extractProtoTypeDetails(genField)
 				genField.Optional = oldOptional
 				if err != nil {
 					return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
 						genType.Name, genField.Name, err)
 				}
+
+				originalFieldType, err := extractProtoTypeDetails(genField)
+				if err != nil {
+					return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
+						genType.Name, genField.Name, err)
+				}
+
 				if genField.Type.Type == field.TypeEnum {
-					fieldType.messageName = fmt.Sprintf("%s.%s", genType.Name, fieldType.messageName)
+					optionalFieldType.messageName = fmt.Sprintf("%s.%s", genType.Name, optionalFieldType.messageName)
+					originalFieldType.messageName = fmt.Sprintf("%s.%s", genType.Name, originalFieldType.messageName)
 				}
 				if filterAnnotation.Mode&FilterModeEQ != 0 {
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(snake(genField.Name)),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
-						Type:     &fieldType.protoType,
-						TypeName: strptr(fieldType.messageName),
+						Type:     &optionalFieldType.protoType,
+						TypeName: strptr(optionalFieldType.messageName),
 					})
 				}
 				if filterAnnotation.Mode&FilterModeContains != 0 {
@@ -240,16 +248,16 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(fmt.Sprintf("%s_contains", snake(genField.Name))),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
-						Type:     &fieldType.protoType,
-						TypeName: strptr(fieldType.messageName),
+						Type:     &optionalFieldType.protoType,
+						TypeName: strptr(optionalFieldType.messageName),
 					})
 				}
 				if filterAnnotation.Mode&FilterModeIn != 0 {
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(fmt.Sprintf("%s_in", snake(genField.Name))),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
-						Type:     &fieldType.protoType,
-						TypeName: strptr(fieldType.messageName),
+						Type:     &originalFieldType.protoType,
+						TypeName: strptr(originalFieldType.messageName),
 						Label:    &repeatedFieldLabel,
 					})
 				}
