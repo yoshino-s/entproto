@@ -49,13 +49,6 @@ func (g *helperGenerator) generate() error {
 					strings.Join(args, ","),
 				)
 			},
-			"callHook": func(action string, query string) string {
-				return fmt.Sprintf(
-					"if err := svc.RunHooks(ctx, %s, req, %s); err != nil { return nil, err }",
-					g.QualifiedGoIdent(runtimePackage.Ident("Action"+action)),
-					query,
-				)
-			},
 		}).
 		ParseFS(templates, "template/helper/*.tmpl")
 	if err != nil {

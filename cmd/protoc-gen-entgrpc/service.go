@@ -101,6 +101,13 @@ func (g *serviceGenerator) generate() error {
 					query,
 				)
 			},
+			"callHookAfter": func(action string, res string) string {
+				return fmt.Sprintf(
+					"if err := svc.RunHooksAfter(ctx, %s, req, %s); err != nil { return nil, err }",
+					g.QualifiedGoIdent(runtimePackage.Ident("ActionAfter"+action)),
+					res,
+				)
+			},
 			"hasSuffix": func(s, suffix string) bool {
 				return strings.HasSuffix(s, suffix)
 			},

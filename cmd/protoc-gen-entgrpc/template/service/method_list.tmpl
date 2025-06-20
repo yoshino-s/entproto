@@ -15,11 +15,12 @@
 		return nil, wrapError(err)
 	}
 
-	return connect.NewResponse(&{{ ident .Method.Output.GoIdent }}{
+	res := connect.NewResponse(&{{ ident .Method.Output.GoIdent }}{
 		Items: items,
 		Total: int32(total),
-	}), nil
-
+	})
+	{{ callHookAfter .Method.GoName "res" }}
+	return res, nil
 {{ end }}
 
 {{ define "build_list_query" }}

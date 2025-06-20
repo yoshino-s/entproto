@@ -8,5 +8,10 @@
     )
 
     {{ callHook .Method.GoName "query" }}
-    return {{ qualify "github.com/yoshino-s/entproto/runtime" "WrapResult"}}(WrapProto{{ .G.EntType.Name }}(query.First(ctx)))
+    res, err := {{ qualify "github.com/yoshino-s/entproto/runtime" "WrapResult"}}(WrapProto{{ .G.EntType.Name }}(query.First(ctx)))
+    if err != nil {
+        return nil, err
+    }
+    {{ callHookAfter .Method.GoName "res" }}
+    return res, nil
 {{ end }}

@@ -21,7 +21,12 @@
     
     {{ callHook .Method.GoName "m" }}
 
-    return {{ qualify "github.com/yoshino-s/entproto/runtime" "WrapResult"}}(WrapProto{{ .G.EntType.Name }}(m.Save(ctx)))
+    res, err := {{ qualify "github.com/yoshino-s/entproto/runtime" "WrapResult"}}(WrapProto{{ .G.EntType.Name }}(m.Save(ctx)))
+    if err != nil {
+        return nil, err
+    }
+    {{ callHookAfter .Method.GoName "res" }}
+    return res, nil
 {{ end }}
 
 {{ define "create_builder_func" }}

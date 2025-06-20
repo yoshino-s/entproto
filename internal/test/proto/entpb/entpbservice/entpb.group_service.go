@@ -42,7 +42,14 @@ func (svc *GroupServiceHandler) Create(ctx context.Context, req *connect.Request
 		return nil, err
 	}
 
-	return runtime.WrapResult(WrapProtoGroup(m.Save(ctx)))
+	res, err := runtime.WrapResult(WrapProtoGroup(m.Save(ctx)))
+	if err != nil {
+		return nil, err
+	}
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterCreate, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
 
 }
 
@@ -57,7 +64,14 @@ func (svc *GroupServiceHandler) Get(ctx context.Context, req *connect.Request[wr
 	if err := svc.RunHooks(ctx, runtime.ActionGet, req, query); err != nil {
 		return nil, err
 	}
-	return runtime.WrapResult(WrapProtoGroup(query.First(ctx)))
+	res, err := runtime.WrapResult(WrapProtoGroup(query.First(ctx)))
+	if err != nil {
+		return nil, err
+	}
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterGet, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
 
 }
 
@@ -77,7 +91,14 @@ func (svc *GroupServiceHandler) Update(ctx context.Context, req *connect.Request
 		return nil, err
 	}
 
-	return runtime.WrapResult(WrapProtoGroup(m.Save(ctx)))
+	res, err := runtime.WrapResult(WrapProtoGroup(m.Save(ctx)))
+	if err != nil {
+		return nil, err
+	}
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterUpdate, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
 
 }
 
@@ -92,7 +113,12 @@ func (svc *GroupServiceHandler) Delete(ctx context.Context, req *connect.Request
 	if err := query.Exec(ctx); err != nil {
 		return nil, wrapError(err)
 	}
-	return connect.NewResponse(&emptypb.Empty{}), nil
+
+	res := connect.NewResponse(&emptypb.Empty{})
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterDelete, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
 
 }
 
@@ -114,10 +140,14 @@ func (svc *GroupServiceHandler) List(ctx context.Context, req *connect.Request[e
 		return nil, wrapError(err)
 	}
 
-	return connect.NewResponse(&entpb.ListGroupResponse{
+	res := connect.NewResponse(&entpb.ListGroupResponse{
 		Items: items,
 		Total: int32(total),
-	}), nil
+	})
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterList, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
 
 }
 

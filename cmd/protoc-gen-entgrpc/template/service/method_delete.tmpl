@@ -6,6 +6,9 @@
     if err := query.Exec(ctx); err != nil {
         return nil, wrapError(err)
     }
-    return {{ $.G.ConnectPackage.Ident "NewResponse" | ident }}(&{{ qualify "google.golang.org/protobuf/types/known/emptypb" "Empty" }}{
-    }), nil
+    
+    res := {{ $.G.ConnectPackage.Ident "NewResponse" | ident }}(&{{ qualify "google.golang.org/protobuf/types/known/emptypb" "Empty" }}{
+    })
+    {{ callHookAfter .Method.GoName "res" }}
+    return res, nil
 {{ end }}
