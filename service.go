@@ -140,8 +140,61 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 		method.OutputType = strptr(genType.Name)
 	case MethodUpdate:
 		method.Name = strptr("Update")
-		method.InputType = strptr(genType.Name)
+		method.InputType = strptr(fmt.Sprintf("Update%sRequest", genType.Name))
 		method.OutputType = strptr(genType.Name)
+
+		input.Name = method.InputType
+		input.Field = []*descriptorpb.FieldDescriptorProto{}
+
+		all := []*gen.Field{genType.ID}
+		all = append(all, genType.Fields...)
+		for _, genField := range all {
+			if genField.Immutable {
+				continue // Immutable fields are not included in Update requests.
+			}
+
+			var optionalFieldType fieldType
+			var err error
+			if genField.Type.Type != field.TypeEnum {
+				optionalFieldType, err = extractProtoTypeDetails(genField, genField.Name != "id")
+				if err != nil {
+					return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
+						genType.Name, genField.Name, err)
+				}
+			} else {
+				optionalFieldType = fieldType{
+					messageName: pascal(genType.Name + "_" + genField.Name + "_enum_value"),
+					protoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
+					repeated:    false,
+				}
+			}
+
+			input.Field = append(input.Field, &descriptorpb.FieldDescriptorProto{
+				Name:     strptr(snake(genField.Name)),
+				Number:   int32ptr(int32(len(input.Field) + 1)),
+				Type:     &optionalFieldType.protoType,
+				TypeName: strptr(optionalFieldType.messageName),
+			})
+		}
+
+		for _, e := range genType.Edges {
+			descriptor, err := a.extractEdgeFieldDescriptor(genType, e)
+			if err != nil {
+				return methodResources{}, fmt.Errorf("entproto: unable to extract edge field descriptor for schema %q edge %q: %w",
+					genType.Name, e.Name, err)
+			}
+			if descriptor != nil {
+				input.Field = append(input.Field, &descriptorpb.FieldDescriptorProto{
+					Name:     descriptor.Name,
+					Number:   int32ptr(int32(len(input.Field) + 1)),
+					Type:     descriptor.Type,
+					Label:    descriptor.Label,
+					TypeName: descriptor.TypeName,
+				})
+			}
+		}
+
+		messages = append(messages, input)
 	case MethodDelete:
 		method.Name = strptr("Delete")
 		method.InputType = strptr("google.protobuf.Int32Value")
@@ -211,15 +264,20 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 			}
 
 			if filterAnnotation != nil {
-				oldOptional := genField.Optional
+				var optionalFieldType fieldType
+				var err error
 				if genField.Type.Type != field.TypeEnum {
-					genField.Optional = true
-				}
-				optionalFieldType, err := extractProtoTypeDetails(genField)
-				genField.Optional = oldOptional
-				if err != nil {
-					return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
-						genType.Name, genField.Name, err)
+					optionalFieldType, err = extractProtoTypeDetails(genField, true)
+					if err != nil {
+						return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
+							genType.Name, genField.Name, err)
+					}
+				} else {
+					optionalFieldType = fieldType{
+						messageName: pascal(genType.Name + "_" + genField.Name + "_enum_value"),
+						protoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
+						repeated:    false,
+					}
 				}
 
 				originalFieldType, err := extractProtoTypeDetails(genField)
@@ -229,9 +287,9 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 				}
 
 				if genField.Type.Type == field.TypeEnum {
-					optionalFieldType.messageName = fmt.Sprintf("%s.%s", genType.Name, optionalFieldType.messageName)
 					originalFieldType.messageName = fmt.Sprintf("%s.%s", genType.Name, originalFieldType.messageName)
 				}
+
 				if filterAnnotation.Mode&FilterModeEQ != 0 {
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(snake(genField.Name)),

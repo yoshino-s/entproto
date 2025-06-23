@@ -16,7 +16,7 @@
         {{- $id := print $reqVar ".Get" $idField.PbStructField "() " -}}
         {{- template "field_to_ent" dict "Field" $idField "VarName" $varName "Ident" $id }}
         m := svc.Client.{{ .G.EntType.Name }}.UpdateOneID({{ $varName }})
-        {{- template "mutate_helper" . -}}
+        {{- template "update_helper" . -}}
     {{- end }}
     
     {{ callHook .Method.GoName "m" }}
@@ -59,6 +59,42 @@
             {{- if (or .EntField.Optional (and .EntField.Default (eq .EntField.Type.Type 2) ) ) }}
                 }
             {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- range .G.FieldMap.Edges }}
+        {{- if .EntEdge.Unique }}
+            {{- $varName := camel (printf "%s_%s" $reqVar .EntEdge.Name) -}}
+            {{- $id := printf "%s.Get%s().Get%s()" $reqVar .PbStructField .EdgeIDPbStructField  }}
+            {{- $other := printf "%s.Get%s()" $reqVar .PbStructField }}
+            if {{ $other }} != nil {
+                {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
+                m.Set{{ .EntEdge.StructField }}ID({{ $varName }})
+            }
+        {{- else }}
+            for _, item := range {{ $reqVar }}.Get{{ .PbStructField }}() {
+                {{- $varName  := camel .EntEdge.StructField }}
+                {{- $id := printf "item.Get%s()" .EdgeIDPbStructField }}
+                {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
+                m.Add{{ singular .EntEdge.StructField }}IDs({{ $varName }})
+            }
+        {{- end }}
+    {{- end }}
+{{ end }}
+
+
+{{ define "update_helper" }}
+    {{- $methodName := .Method.GoName -}}
+    {{- $reqVar := camel .G.EntType.Name -}}
+    {{- range .G.FieldMap.Fields }}
+        {{- $skipImmutable := and ( eq $methodName "Update" ) .EntField.Immutable -}}
+        {{- $skip := or .IsIDField $skipImmutable -}}
+        {{- if not $skip }}
+            {{- $varName := camel (print $reqVar  "_"  .EntField.Name) -}}
+            {{- $id := print $reqVar ".Get" .PbStructField "() " }}
+            if {{ $id }} != nil {
+                {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id "PbFieldDescriptor" (getPbField $ .) }}
+                m.Set{{ .EntField.StructField }}({{ $varName }})
+            }
         {{- end }}
     {{- end }}
     {{- range .G.FieldMap.Edges }}

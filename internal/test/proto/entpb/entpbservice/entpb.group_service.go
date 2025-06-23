@@ -76,12 +76,14 @@ func (svc *GroupServiceHandler) Get(ctx context.Context, req *connect.Request[wr
 }
 
 // Update implements GroupServiceHandlerServer.Update
-func (svc *GroupServiceHandler) Update(ctx context.Context, req *connect.Request[entpb.Group]) (*connect.Response[entpb.Group], error) {
+func (svc *GroupServiceHandler) Update(ctx context.Context, req *connect.Request[entpb.UpdateGroupRequest]) (*connect.Response[entpb.Group], error) {
 	group := req.Msg
 	groupID := int(group.GetId())
 	m := svc.Client.Group.UpdateOneID(groupID)
-	groupName := group.GetName()
-	m.SetName(groupName)
+	if group.GetName() != nil {
+		groupName := group.GetName().GetValue()
+		m.SetName(groupName)
+	}
 	for _, item := range group.GetUsers() {
 		users := int(item.GetId())
 		m.AddUserIDs(users)

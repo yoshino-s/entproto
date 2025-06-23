@@ -49,9 +49,15 @@ type converter struct {
 	ToProtoValuer                string
 }
 
-func (g *serviceGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*converter, error) {
+func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...protoreflect.FieldDescriptor) (*converter, error) {
 	out := &converter{}
-	pbd := fld.PbFieldDescriptor
+
+	var pbd protoreflect.FieldDescriptor
+	if len(pbds) == 0 || pbds[0] == nil {
+		pbd = fld.PbFieldDescriptor
+	} else {
+		pbd = pbds[0]
+	}
 	switch pbd.Kind() {
 	case protoreflect.BoolKind, protoreflect.StringKind,
 		protoreflect.BytesKind, protoreflect.Int32Kind,
@@ -66,7 +72,14 @@ func (g *serviceGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*
 		method := fmt.Sprintf("toProto%s_%s", g.EntType.Name, enumName)
 		out.ToProtoConstructor = g.GoImportPath.Ident(method)
 	case protoreflect.MessageKind:
-		if fld.IsEdgeField {
+		if strings.HasSuffix(string(pbd.Message().FullName()), "EnumValue") {
+			// This is a special case for enum values, which are represented as messages in protobuf.
+			// We need to convert them to the corresponding enum type in ent.
+			enumName := pbd.Message().Name()
+			method := fmt.Sprintf("toProto%s_%s", g.EntType.Name, enumName)
+			out.ToProtoConstructor = g.GoImportPath.Ident(method)
+			out.ToEntModifier = ".GetValue()"
+		} else if fld.IsEdgeField {
 			if err := basicTypeConversion(fld.EdgeIDPbStructFieldDesc(), fld.EntEdge.Type.ID, out); err != nil {
 				return nil, err
 			}
@@ -86,6 +99,7 @@ func (g *serviceGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*
 		// Ident returned from ent already has the packagename prefixed. Strip it since `g.QualifiedGoIdent`
 		// adds it back.
 		split := strings.Split(efld.Type.Ident, ".")
+
 		out.ToEntMarshallerConstructor = protogen.GoImportPath(efld.Type.PkgPath).Ident(split[1])
 	case efld.Type.ValueScanner():
 		switch {
@@ -107,84 +121,15 @@ func (g *serviceGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*
 	case efld.IsTime():
 		out.ToEntConstructor = protogen.GoImportPath("github.com/yoshino-s/entproto/runtime").Ident("ExtractTime")
 	case efld.IsEnum():
-		enumName := fld.PbFieldDescriptor.Enum().Name()
-		method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
-		out.ToEntConstructor = g.GoImportPath.Ident(method)
-	case efld.IsJSON():
-		switch efld.Type.Ident {
-		case "[]string":
-		case "[]int32", "[]int64", "[]uint32", "[]uint64":
-			out.ToProtoConversion = ""
-		default:
-			return nil, fmt.Errorf("entproto: no mapping to ent field type %q", efld.Type.ConstName())
+		if fld.PbFieldDescriptor.Enum() != nil {
+			enumName := fld.PbFieldDescriptor.Enum().Name()
+			method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
+			out.ToEntConstructor = g.GoImportPath.Ident(method)
+		} else {
+			enumName := fld.PbFieldDescriptor.Message().Name()
+			method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
+			out.ToEntConstructor = g.GoImportPath.Ident(method)
 		}
-	default:
-		return nil, fmt.Errorf("entproto: no mapping to ent field type %q", efld.Type.ConstName())
-	}
-	return out, nil
-}
-
-func (g *messageGenerator) newConverter(fld *entproto.FieldMappingDescriptor) (*converter, error) {
-	out := &converter{}
-	pbd := fld.PbFieldDescriptor
-	switch pbd.Kind() {
-	case protoreflect.BoolKind, protoreflect.StringKind,
-		protoreflect.BytesKind, protoreflect.Int32Kind,
-		protoreflect.Int64Kind, protoreflect.Uint32Kind,
-		protoreflect.Uint64Kind, protoreflect.FloatKind,
-		protoreflect.DoubleKind:
-		if err := basicTypeConversion(fld.PbFieldDescriptor, fld.EntField, out); err != nil {
-			return nil, err
-		}
-	case protoreflect.EnumKind:
-		enumName := fld.PbFieldDescriptor.Enum().Name()
-		method := fmt.Sprintf("toProto%s_%s", g.EntType.Name, enumName)
-		out.ToProtoConstructor = g.GoImportPath.Ident(method)
-	case protoreflect.MessageKind:
-		if fld.IsEdgeField {
-			if err := basicTypeConversion(fld.EdgeIDPbStructFieldDesc(), fld.EntEdge.Type.ID, out); err != nil {
-				return nil, err
-			}
-		} else if err := convertPbMessageType(pbd.Message(), fld.EntField, out); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("entproto: no mapping for pb field type %q", pbd.Kind())
-	}
-	efld := fld.EntField
-	if fld.IsEdgeField {
-		efld = fld.EntEdge.Type.ID
-	}
-
-	switch {
-	case implements(efld.Type.RType, binaryMarshallerUnmarshallerType) && efld.HasGoType():
-		// Ident returned from ent already has the packagename prefixed. Strip it since `g.QualifiedGoIdent`
-		// adds it back.
-		split := strings.Split(efld.Type.Ident, ".")
-		out.ToEntMarshallerConstructor = protogen.GoImportPath(efld.Type.PkgPath).Ident(split[1])
-	case efld.Type.ValueScanner():
-		switch {
-		case efld.HasGoType():
-			// Ident returned from ent already has the packagename prefixed. Strip it since `g.QualifiedGoIdent`
-			// adds it back.
-			split := strings.Split(efld.Type.Ident, ".")
-			out.ToEntScannerConstructor = protogen.GoImportPath(efld.Type.PkgPath).Ident(split[1])
-		case efld.IsBool():
-			out.ToEntScannerConversion = "bool"
-		case efld.IsBytes():
-			out.ToEntScannerConversion = "[]byte"
-		case efld.IsString():
-			out.ToEntScannerConversion = "string"
-		}
-	case efld.IsBool(), efld.IsBytes(), efld.IsString():
-	case efld.Type.Numeric():
-		out.ToEntConversion = efld.Type.String()
-	case efld.IsTime():
-		out.ToEntConstructor = protogen.GoImportPath("github.com/yoshino-s/entproto/runtime").Ident("ExtractTime")
-	case efld.IsEnum():
-		enumName := fld.PbFieldDescriptor.Enum().Name()
-		method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
-		out.ToEntConstructor = g.GoImportPath.Ident(method)
 	case efld.IsJSON():
 		switch efld.Type.Ident {
 		case "[]string":

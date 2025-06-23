@@ -25,13 +25,18 @@ func newMessageGenerator(plugin *protogen.Plugin, file *protogen.File, graph *ge
 	}
 
 	return &messageGenerator{
-		GoImportPath:  goImportPath,
-		GeneratedFile: g,
-		EntPackage:    protogen.GoImportPath(graph.Config.Package),
-		File:          file,
-		Message:       message,
-		EntType:       typ,
-		FieldMap:      fieldMap,
+		generator: &generator{
+			GeneratedFile: g,
+			EntType:       typ,
+
+			GoImportPath:   goImportPath,
+			RuntimePackage: runtimePackage,
+			EntPackage:     protogen.GoImportPath(graph.Config.Package),
+			ConnectPackage: connectPackage,
+			File:           file,
+			FieldMap:       fieldMap,
+		},
+		Message: message,
 	}, nil
 }
 
@@ -76,13 +81,8 @@ func (g *messageGenerator) generate() error {
 
 type (
 	messageGenerator struct {
-		*protogen.GeneratedFile
-		GoImportPath protogen.GoImportPath
-		EntPackage   protogen.GoImportPath
-		File         *protogen.File
-		Message      *protogen.Message
-		EntType      *gen.Type
-		FieldMap     entproto.FieldMap
+		*generator
+		Message *protogen.Message
 	}
 )
 

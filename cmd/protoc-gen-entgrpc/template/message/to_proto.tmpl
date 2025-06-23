@@ -91,7 +91,7 @@
 
 {{ define "field_to_proto" }}
     {{- $id := .Ident -}}
-    {{- $conv := newConverter .Field -}}
+    {{- $conv := newConverter .Field .PbFieldDescriptor -}}
     {{- if $conv.ToProtoConversion }}
         {{- $id = print $conv.ToProtoConversion "(" $id ")" -}}
     {{- end }}

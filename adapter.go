@@ -144,10 +144,10 @@ func (a *Adapter) parse() error {
 			}
 		}
 		fd := protoPackages[protoPkg]
-		fd.MessageType = append(fd.MessageType, messageDescriptor)
+		fd.MessageType = append(fd.MessageType, messageDescriptor...)
 		a.schemaProtoFiles[genType.Name] = *fd.Name
 
-		depPaths, err := a.extractDepPaths(messageDescriptor)
+		depPaths, err := a.extractDepPaths(messageDescriptor[0])
 		if err != nil {
 			a.errors[genType.Name] = err
 			fmt.Fprintln(os.Stderr, "Skipping schema:", genType.Name, "due to dependency extraction error:", err)
@@ -331,7 +331,7 @@ func (e unsupportedTypeError) Error() string {
 	return fmt.Sprintf("unsupported field type %q", e.Type.ConstName())
 }
 
-func (a *Adapter) toProtoMessageDescriptor(genType *gen.Type) (*descriptorpb.DescriptorProto, error) {
+func (a *Adapter) toProtoMessageDescriptor(genType *gen.Type) ([]*descriptorpb.DescriptorProto, error) {
 	msgAnnot, err := extractMessageAnnotation(genType)
 	if err != nil || !msgAnnot.Generate {
 		return nil, ErrSchemaSkipped
@@ -340,6 +340,7 @@ func (a *Adapter) toProtoMessageDescriptor(genType *gen.Type) (*descriptorpb.Des
 		Name:     &genType.Name,
 		EnumType: []*descriptorpb.EnumDescriptorProto(nil),
 	}
+	msgs := []*descriptorpb.DescriptorProto{msg}
 
 	if !genType.ID.UserDefined {
 		genType.ID.Annotations = map[string]interface{}{FieldAnnotation: Field(IDFieldNumber)}
@@ -364,6 +365,19 @@ func (a *Adapter) toProtoMessageDescriptor(genType *gen.Type) (*descriptorpb.Des
 				return nil, err
 			}
 			msg.EnumType = append(msg.EnumType, dp)
+
+			msgType := descriptorpb.FieldDescriptorProto_TYPE_ENUM
+			msgs = append(msgs, &descriptorpb.DescriptorProto{
+				Name: strptr(pascal(genType.Name + "_" + f.Name + "_enum_value")),
+				Field: []*descriptorpb.FieldDescriptorProto{
+					{
+						Name:     strptr("value"),
+						Number:   int32ptr(1),
+						Type:     &msgType,
+						TypeName: strptr(genType.Name + "." + *dp.Name),
+					},
+				},
+			})
 		}
 		msg.Field = append(msg.Field, protoField)
 	}
@@ -386,7 +400,7 @@ func (a *Adapter) toProtoMessageDescriptor(genType *gen.Type) (*descriptorpb.Des
 		return nil, err
 	}
 
-	return msg, nil
+	return msgs, nil
 }
 
 func verifyNoDuplicateFieldNumbers(msg *descriptorpb.DescriptorProto) error {
@@ -521,7 +535,7 @@ func toProtoFieldDescriptor(f *gen.Field) (*descriptorpb.FieldDescriptorProto, e
 	return fieldDesc, nil
 }
 
-func extractProtoTypeDetails(f *gen.Field) (fieldType, error) {
+func extractProtoTypeDetails(f *gen.Field, optional ...bool) (fieldType, error) {
 	if f.Type.Type == field.TypeJSON {
 		return extractJSONDetails(f)
 	}
@@ -529,7 +543,7 @@ func extractProtoTypeDetails(f *gen.Field) (fieldType, error) {
 	if !ok || cfg.unsupported {
 		return fieldType{}, unsupportedTypeError{Type: f.Type}
 	}
-	if f.Optional {
+	if f.Optional || (len(optional) > 0 && optional[0]) {
 		if cfg.optionalType == "" {
 			return fieldType{}, unsupportedTypeError{Type: f.Type}
 		}

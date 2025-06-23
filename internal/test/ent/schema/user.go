@@ -16,7 +16,9 @@ type User struct {
 func (User) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entproto.Message(),
-		entproto.Service(),
+		entproto.Service(
+			entproto.Methods(entproto.MethodUpdate),
+		),
 	}
 }
 

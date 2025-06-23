@@ -12,6 +12,7 @@ import (
 	entFieldPkg "entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func newServiceGenerator(plugin *protogen.Plugin, file *protogen.File, graph *gen.Graph, adapter *entproto.Adapter, service *protogen.Service, goImportPath protogen.GoImportPath) (*serviceGenerator, error) {
@@ -31,15 +32,18 @@ func newServiceGenerator(plugin *protogen.Plugin, file *protogen.File, graph *ge
 	service.GoName += "Handler"
 
 	return &serviceGenerator{
-		GoImportPath:   goImportPath,
-		GeneratedFile:  g,
-		RuntimePackage: runtimePackage,
-		EntPackage:     protogen.GoImportPath(graph.Config.Package),
-		ConnectPackage: connectPackage,
-		File:           file,
-		Service:        service,
-		EntType:        typ,
-		FieldMap:       fieldMap,
+		generator: &generator{
+			GeneratedFile: g,
+			EntType:       typ,
+
+			GoImportPath:   goImportPath,
+			RuntimePackage: runtimePackage,
+			EntPackage:     protogen.GoImportPath(graph.Config.Package),
+			ConnectPackage: connectPackage,
+			File:           file,
+			FieldMap:       fieldMap,
+		},
+		Service: service,
 	}, nil
 }
 
@@ -110,6 +114,22 @@ func (g *serviceGenerator) generate() error {
 			},
 			"hasSuffix": func(s, suffix string) bool {
 				return strings.HasSuffix(s, suffix)
+			},
+			"builderUpdateMapper": func(m *methodInput) []*updateField {
+				fields := []*updateField{}
+				fieldsMap := map[string]*protogen.Field{}
+				for _, f := range m.Method.Input.Fields {
+					fieldsMap[f.GoName] = f
+				}
+				return fields
+			},
+			"getPbField": func(m *methodInput, field *entproto.FieldMappingDescriptor) protoreflect.FieldDescriptor {
+				for _, f := range m.Method.Input.Fields {
+					if f.Desc.Name() == field.PbFieldDescriptor.Name() {
+						return f.Desc
+					}
+				}
+				return nil
 			},
 			"getFilters": func(m *methodInput) []*filterField {
 				for _, field := range m.Method.Input.Fields {
@@ -186,15 +206,8 @@ func (g *serviceGenerator) generate() error {
 
 type (
 	serviceGenerator struct {
-		*protogen.GeneratedFile
-		RuntimePackage protogen.GoImportPath
-		GoImportPath   protogen.GoImportPath
-		EntPackage     protogen.GoImportPath
-		ConnectPackage protogen.GoImportPath
-		File           *protogen.File
-		Service        *protogen.Service
-		EntType        *gen.Type
-		FieldMap       entproto.FieldMap
+		*generator
+		Service *protogen.Service
 	}
 	methodInput struct {
 		G      *serviceGenerator
@@ -205,6 +218,12 @@ type (
 		Operation string
 		Optional  bool
 		Type      string
+	}
+	updateField struct {
+		EntField    *gen.Field
+		Field       *entproto.FieldMappingDescriptor
+		IsIDField   bool
+		IsEdgeField bool
 	}
 )
 

@@ -17,6 +17,7 @@
         "filedesc",
         "jhump",
         "multierr",
+        "pbds",
         "protobuilder",
         "protoc",
         "protodesc",
