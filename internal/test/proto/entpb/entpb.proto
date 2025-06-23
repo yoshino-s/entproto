@@ -92,6 +92,42 @@ message UpdateUserRequest {
   Group group = 6;
 }
 
+message ListUserFilter {
+  google.protobuf.StringValue name = 1;
+
+  google.protobuf.StringValue name_contains = 2;
+
+  repeated string name_in = 3;
+
+  UserGenderEnumValue gender = 4;
+
+  repeated User.Gender gender_in = 5;
+
+  google.protobuf.Timestamp created_at = 6;
+
+  repeated google.protobuf.Timestamp created_at_in = 7;
+}
+
+message ListUserRequest {
+  google.protobuf.Int32Value offset = 1;
+
+  google.protobuf.Int32Value limit = 2;
+
+  google.protobuf.StringValue order = 3;
+
+  bool descending = 4;
+
+  ListUserFilter filter = 5;
+
+  bool no_limit = 6;
+}
+
+message ListUserResponse {
+  repeated User items = 1;
+
+  int32 total = 2;
+}
+
 service GroupService {
   rpc Create ( Group ) returns ( Group );
 
@@ -109,5 +145,17 @@ service GroupService {
 }
 
 service UserService {
+  rpc Create ( User ) returns ( User );
+
+  rpc Get ( google.protobuf.Int32Value ) returns ( User ) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
   rpc Update ( UpdateUserRequest ) returns ( User );
+
+  rpc Delete ( google.protobuf.Int32Value ) returns ( google.protobuf.Empty );
+
+  rpc List ( ListUserRequest ) returns ( ListUserResponse ) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 }

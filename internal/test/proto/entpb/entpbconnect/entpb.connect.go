@@ -49,8 +49,16 @@ const (
 	GroupServiceDeleteProcedure = "/entpb.GroupService/Delete"
 	// GroupServiceListProcedure is the fully-qualified name of the GroupService's List RPC.
 	GroupServiceListProcedure = "/entpb.GroupService/List"
+	// UserServiceCreateProcedure is the fully-qualified name of the UserService's Create RPC.
+	UserServiceCreateProcedure = "/entpb.UserService/Create"
+	// UserServiceGetProcedure is the fully-qualified name of the UserService's Get RPC.
+	UserServiceGetProcedure = "/entpb.UserService/Get"
 	// UserServiceUpdateProcedure is the fully-qualified name of the UserService's Update RPC.
 	UserServiceUpdateProcedure = "/entpb.UserService/Update"
+	// UserServiceDeleteProcedure is the fully-qualified name of the UserService's Delete RPC.
+	UserServiceDeleteProcedure = "/entpb.UserService/Delete"
+	// UserServiceListProcedure is the fully-qualified name of the UserService's List RPC.
+	UserServiceListProcedure = "/entpb.UserService/List"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -62,7 +70,11 @@ var (
 	groupServiceDeleteMethodDescriptor = groupServiceServiceDescriptor.Methods().ByName("Delete")
 	groupServiceListMethodDescriptor   = groupServiceServiceDescriptor.Methods().ByName("List")
 	userServiceServiceDescriptor       = entpb.File_proto_entpb_entpb_proto.Services().ByName("UserService")
+	userServiceCreateMethodDescriptor  = userServiceServiceDescriptor.Methods().ByName("Create")
+	userServiceGetMethodDescriptor     = userServiceServiceDescriptor.Methods().ByName("Get")
 	userServiceUpdateMethodDescriptor  = userServiceServiceDescriptor.Methods().ByName("Update")
+	userServiceDeleteMethodDescriptor  = userServiceServiceDescriptor.Methods().ByName("Delete")
+	userServiceListMethodDescriptor    = userServiceServiceDescriptor.Methods().ByName("List")
 )
 
 // GroupServiceClient is a client for the entpb.GroupService service.
@@ -243,7 +255,11 @@ func (UnimplementedGroupServiceHandler) List(context.Context, *connect.Request[e
 
 // UserServiceClient is a client for the entpb.UserService service.
 type UserServiceClient interface {
+	Create(context.Context, *connect.Request[entpb.User]) (*connect.Response[entpb.User], error)
+	Get(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.User], error)
 	Update(context.Context, *connect.Request[entpb.UpdateUserRequest]) (*connect.Response[entpb.User], error)
+	Delete(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error)
+	List(context.Context, *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the entpb.UserService service. By default, it uses
@@ -256,10 +272,36 @@ type UserServiceClient interface {
 func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) UserServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &userServiceClient{
+		create: connect.NewClient[entpb.User, entpb.User](
+			httpClient,
+			baseURL+UserServiceCreateProcedure,
+			connect.WithSchema(userServiceCreateMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		get: connect.NewClient[wrapperspb.Int32Value, entpb.User](
+			httpClient,
+			baseURL+UserServiceGetProcedure,
+			connect.WithSchema(userServiceGetMethodDescriptor),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		update: connect.NewClient[entpb.UpdateUserRequest, entpb.User](
 			httpClient,
 			baseURL+UserServiceUpdateProcedure,
 			connect.WithSchema(userServiceUpdateMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		delete: connect.NewClient[wrapperspb.Int32Value, emptypb.Empty](
+			httpClient,
+			baseURL+UserServiceDeleteProcedure,
+			connect.WithSchema(userServiceDeleteMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		list: connect.NewClient[entpb.ListUserRequest, entpb.ListUserResponse](
+			httpClient,
+			baseURL+UserServiceListProcedure,
+			connect.WithSchema(userServiceListMethodDescriptor),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -267,7 +309,21 @@ func NewUserServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
+	create *connect.Client[entpb.User, entpb.User]
+	get    *connect.Client[wrapperspb.Int32Value, entpb.User]
 	update *connect.Client[entpb.UpdateUserRequest, entpb.User]
+	delete *connect.Client[wrapperspb.Int32Value, emptypb.Empty]
+	list   *connect.Client[entpb.ListUserRequest, entpb.ListUserResponse]
+}
+
+// Create calls entpb.UserService.Create.
+func (c *userServiceClient) Create(ctx context.Context, req *connect.Request[entpb.User]) (*connect.Response[entpb.User], error) {
+	return c.create.CallUnary(ctx, req)
+}
+
+// Get calls entpb.UserService.Get.
+func (c *userServiceClient) Get(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.User], error) {
+	return c.get.CallUnary(ctx, req)
 }
 
 // Update calls entpb.UserService.Update.
@@ -275,9 +331,23 @@ func (c *userServiceClient) Update(ctx context.Context, req *connect.Request[ent
 	return c.update.CallUnary(ctx, req)
 }
 
+// Delete calls entpb.UserService.Delete.
+func (c *userServiceClient) Delete(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
+	return c.delete.CallUnary(ctx, req)
+}
+
+// List calls entpb.UserService.List.
+func (c *userServiceClient) List(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error) {
+	return c.list.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the entpb.UserService service.
 type UserServiceHandler interface {
+	Create(context.Context, *connect.Request[entpb.User]) (*connect.Response[entpb.User], error)
+	Get(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.User], error)
 	Update(context.Context, *connect.Request[entpb.UpdateUserRequest]) (*connect.Response[entpb.User], error)
+	Delete(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error)
+	List(context.Context, *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -286,16 +356,50 @@ type UserServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	userServiceCreateHandler := connect.NewUnaryHandler(
+		UserServiceCreateProcedure,
+		svc.Create,
+		connect.WithSchema(userServiceCreateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceGetHandler := connect.NewUnaryHandler(
+		UserServiceGetProcedure,
+		svc.Get,
+		connect.WithSchema(userServiceGetMethodDescriptor),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	userServiceUpdateHandler := connect.NewUnaryHandler(
 		UserServiceUpdateProcedure,
 		svc.Update,
 		connect.WithSchema(userServiceUpdateMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	userServiceDeleteHandler := connect.NewUnaryHandler(
+		UserServiceDeleteProcedure,
+		svc.Delete,
+		connect.WithSchema(userServiceDeleteMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	userServiceListHandler := connect.NewUnaryHandler(
+		UserServiceListProcedure,
+		svc.List,
+		connect.WithSchema(userServiceListMethodDescriptor),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/entpb.UserService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case UserServiceCreateProcedure:
+			userServiceCreateHandler.ServeHTTP(w, r)
+		case UserServiceGetProcedure:
+			userServiceGetHandler.ServeHTTP(w, r)
 		case UserServiceUpdateProcedure:
 			userServiceUpdateHandler.ServeHTTP(w, r)
+		case UserServiceDeleteProcedure:
+			userServiceDeleteHandler.ServeHTTP(w, r)
+		case UserServiceListProcedure:
+			userServiceListHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -305,6 +409,22 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect.HandlerOption
 // UnimplementedUserServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedUserServiceHandler struct{}
 
+func (UnimplementedUserServiceHandler) Create(context.Context, *connect.Request[entpb.User]) (*connect.Response[entpb.User], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.UserService.Create is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) Get(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.User], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.UserService.Get is not implemented"))
+}
+
 func (UnimplementedUserServiceHandler) Update(context.Context, *connect.Request[entpb.UpdateUserRequest]) (*connect.Response[entpb.User], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.UserService.Update is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) Delete(context.Context, *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.UserService.Delete is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) List(context.Context, *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("entpb.UserService.List is not implemented"))
 }

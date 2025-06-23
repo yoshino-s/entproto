@@ -126,7 +126,7 @@ func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...p
 			method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
 			out.ToEntConstructor = g.GoImportPath.Ident(method)
 		} else {
-			enumName := fld.PbFieldDescriptor.Message().Name()
+			enumName := fld.PbFieldDescriptor.Message().Fields().ByName("value").Enum().Name()
 			method := fmt.Sprintf("toEnt%s_%s", g.EntType.Name, enumName)
 			out.ToEntConstructor = g.GoImportPath.Ident(method)
 		}

@@ -4,10 +4,15 @@ package entpbservice
 import (
 	connect "connectrpc.com/connect"
 	context "context"
+	gen "entgo.io/ent/entc/gen"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
+	user "github.com/yoshino-s/entproto/internal/test/ent/user"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
 	entpbconnect "github.com/yoshino-s/entproto/internal/test/proto/entpb/entpbconnect"
 	runtime "github.com/yoshino-s/entproto/runtime"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+	time "time"
 )
 
 // UserServiceHandler implements $connectHandler
@@ -24,6 +29,51 @@ func NewUserServiceHandler(client *ent.Client) *UserServiceHandler {
 		BaseService: runtime.NewBaseService(),
 		Client:      client,
 	}
+}
+
+// Create implements UserServiceHandlerServer.Create
+func (svc *UserServiceHandler) Create(ctx context.Context, req *connect.Request[entpb.User]) (*connect.Response[entpb.User], error) {
+	user := req.Msg
+	m, err := svc.createBuilder(user)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := svc.RunHooks(ctx, runtime.ActionCreate, req, m); err != nil {
+		return nil, err
+	}
+
+	res, err := runtime.WrapResult(WrapProtoUser(m.Save(ctx)))
+	if err != nil {
+		return nil, err
+	}
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterCreate, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
+
+}
+
+// Get implements UserServiceHandlerServer.Get
+func (svc *UserServiceHandler) Get(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[entpb.User], error) {
+
+	query := svc.Client.User.Query()
+	query = query.Where(
+		user.ID(int(req.Msg.Value)),
+	)
+
+	if err := svc.RunHooks(ctx, runtime.ActionGet, req, query); err != nil {
+		return nil, err
+	}
+	res, err := runtime.WrapResult(WrapProtoUser(query.First(ctx)))
+	if err != nil {
+		return nil, err
+	}
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterGet, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
+
 }
 
 // Update implements UserServiceHandlerServer.Update
@@ -65,4 +115,170 @@ func (svc *UserServiceHandler) Update(ctx context.Context, req *connect.Request[
 	}
 	return res, nil
 
+}
+
+// Delete implements UserServiceHandlerServer.Delete
+func (svc *UserServiceHandler) Delete(ctx context.Context, req *connect.Request[wrapperspb.Int32Value]) (*connect.Response[emptypb.Empty], error) {
+
+	query := svc.Client.User.DeleteOneID(int(req.Msg.Value))
+	if err := svc.RunHooks(ctx, runtime.ActionDelete, req, query); err != nil {
+		return nil, err
+	}
+
+	if err := query.Exec(ctx); err != nil {
+		return nil, wrapError(err)
+	}
+
+	res := connect.NewResponse(&emptypb.Empty{})
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterDelete, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
+
+}
+
+// List implements UserServiceHandlerServer.List
+func (svc *UserServiceHandler) List(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*connect.Response[entpb.ListUserResponse], error) {
+
+	query, totalQuery, err := svc.BuildListQuery(ctx, req)
+
+	if err != nil {
+		return nil, wrapError(err)
+	}
+
+	items, err := WrapProtoUserList(query.All(ctx))
+	if err != nil {
+		return nil, wrapError(err)
+	}
+	total, err := totalQuery.Count(ctx)
+	if err != nil {
+		return nil, wrapError(err)
+	}
+
+	res := connect.NewResponse(&entpb.ListUserResponse{
+		Items: items,
+		Total: int32(total),
+	})
+	if err := svc.RunHooksAfter(ctx, runtime.ActionAfterList, req, res); err != nil {
+		return nil, err
+	}
+	return res, nil
+
+}
+
+// List implements UserServiceHandlerServer.List
+func (svc *UserServiceHandler) BuildListQuery(ctx context.Context, req *connect.Request[entpb.ListUserRequest]) (*ent.UserQuery, *ent.UserQuery, error) {
+
+	snake := gen.Funcs["snake"].(func(string) string)
+
+	query := svc.Client.User.Query()
+	totalQuery := svc.Client.User.Query()
+
+	if !req.Msg.NoLimit {
+		if req.Msg.Limit != nil && req.Msg.Limit.Value > 0 {
+			query = query.Limit(int(req.Msg.Limit.Value))
+		} else { // If no limit, set default limit
+			query = query.Limit(10)
+		}
+	}
+	if req.Msg.Offset != nil {
+		query = query.Offset(int(req.Msg.Offset.Value))
+	}
+	if req.Msg.Order != nil {
+		OrderFunc := ent.Asc
+		if req.Msg.Descending {
+			OrderFunc = ent.Desc
+		}
+		query = query.Order(OrderFunc(snake(req.Msg.Order.Value)))
+	} else {
+		query = query.Order(ent.Asc("id"))
+	}
+
+	if req.Msg.Filter != nil {
+
+		if req.Msg.Filter.GetName() != nil {
+			filterName := req.Msg.Filter.GetName().GetValue()
+			query = query.Where(user.NameEQ(filterName))
+			totalQuery = totalQuery.Where(user.NameEQ(filterName))
+		}
+
+		if req.Msg.Filter.GetNameContains() != nil {
+			filterNameContains := req.Msg.Filter.GetNameContains().GetValue()
+			query = query.Where(user.NameContains(filterNameContains))
+			totalQuery = totalQuery.Where(user.NameContains(filterNameContains))
+		}
+
+		if req.Msg.Filter.GetNameIn() != nil {
+			filterNameIns := []string{}
+			for _, item := range req.Msg.Filter.GetNameIn() {
+				filterNameIn := item
+				filterNameIns = append(filterNameIns, filterNameIn)
+			}
+			query = query.Where(user.NameIn(filterNameIns...))
+			totalQuery = totalQuery.Where(user.NameIn(filterNameIns...))
+		}
+
+		filterGender := toEntUser_Gender(req.Msg.Filter.GetGender().GetValue())
+		query = query.Where(user.GenderEQ(filterGender))
+		totalQuery = totalQuery.Where(user.GenderEQ(filterGender))
+
+		if req.Msg.Filter.GetGenderIn() != nil {
+			filterGenderIns := []user.Gender{}
+			for _, item := range req.Msg.Filter.GetGenderIn() {
+				filterGenderIn := toEntUser_Gender(item)
+				filterGenderIns = append(filterGenderIns, filterGenderIn)
+			}
+			query = query.Where(user.GenderIn(filterGenderIns...))
+			totalQuery = totalQuery.Where(user.GenderIn(filterGenderIns...))
+		}
+
+		if req.Msg.Filter.GetCreatedAt() != nil {
+			filterCreatedAt := runtime.ExtractTime(req.Msg.Filter.GetCreatedAt())
+			query = query.Where(user.CreatedAtEQ(filterCreatedAt))
+			totalQuery = totalQuery.Where(user.CreatedAtEQ(filterCreatedAt))
+		}
+
+		if req.Msg.Filter.GetCreatedAtIn() != nil {
+			filterCreatedAtIns := []time.Time{}
+			for _, item := range req.Msg.Filter.GetCreatedAtIn() {
+				filterCreatedAtIn := runtime.ExtractTime(item)
+				filterCreatedAtIns = append(filterCreatedAtIns, filterCreatedAtIn)
+			}
+			query = query.Where(user.CreatedAtIn(filterCreatedAtIns...))
+			totalQuery = totalQuery.Where(user.CreatedAtIn(filterCreatedAtIns...))
+		}
+	}
+
+	if err := svc.RunHooks(ctx, runtime.ActionList, req, query); err != nil {
+		return nil, nil, err
+	}
+	if err := svc.RunHooks(ctx, runtime.ActionListCount, req, totalQuery); err != nil {
+		return nil, nil, err
+	}
+
+	return query, totalQuery, nil
+
+}
+
+func (svc *UserServiceHandler) createBuilder(user *entpb.User) (*ent.UserCreate, error) {
+	m := svc.Client.User.Create()
+	userCreatedAt := runtime.ExtractTime(user.GetCreatedAt())
+	m.SetCreatedAt(userCreatedAt)
+	if user.GetDescription() != nil {
+		userDescription := user.GetDescription().GetValue()
+		m.SetDescription(userDescription)
+	}
+	userGender := toEntUser_Gender(user.GetGender())
+	m.SetGender(userGender)
+	if user.GetGroupId() != nil {
+		userGroupID := int(user.GetGroupId().GetValue())
+		m.SetGroupID(userGroupID)
+	}
+	userName := user.GetName()
+	m.SetName(userName)
+	if user.GetGroup() != nil {
+		userGroup := int(user.GetGroup().GetId())
+		m.SetGroupID(userGroup)
+	}
+	return m, nil
 }
