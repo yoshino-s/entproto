@@ -49,14 +49,18 @@ type converter struct {
 	ToProtoValuer                string
 }
 
-func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...protoreflect.FieldDescriptor) (*converter, error) {
+func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...any) (*converter, error) {
 	out := &converter{}
 
 	var pbd protoreflect.FieldDescriptor
-	if len(pbds) == 0 || pbds[0] == nil {
+	if len(pbds) == 0 {
 		pbd = fld.PbFieldDescriptor
 	} else {
-		pbd = pbds[0]
+		if _pdb, ok := pbds[0].(protoreflect.FieldDescriptor); !ok {
+			pbd = fld.PbFieldDescriptor
+		} else {
+			pbd = _pdb
+		}
 	}
 	switch pbd.Kind() {
 	case protoreflect.BoolKind, protoreflect.StringKind,
