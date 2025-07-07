@@ -121,6 +121,11 @@
         }
     {{- else if $conv.ToProtoConstructor.GoName }}
         {{ .VarName }} := {{ ident $conv.ToProtoConstructor }}({{ $id }})
+    {{- else if $conv.ToProtoConstructorWithError.GoName }}
+        {{ .VarName }}, err := {{ ident $conv.ToProtoConstructorWithError }}({{ $id }})
+        if err != nil {
+            return nil, err
+        }
     {{- else }}
         {{ .VarName }} := {{ $id }}
     {{- end }}

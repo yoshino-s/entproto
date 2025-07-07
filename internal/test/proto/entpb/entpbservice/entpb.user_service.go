@@ -5,6 +5,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	gen "entgo.io/ent/entc/gen"
+	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
 	user "github.com/yoshino-s/entproto/internal/test/ent/user"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
@@ -96,6 +97,14 @@ func (svc *UserServiceHandler) Update(ctx context.Context, req *connect.Request[
 	if user.GetName() != nil {
 		userName := user.GetName().GetValue()
 		m.SetName(userName)
+	}
+	if user.GetPreferences() != nil {
+		var userPreferencesTmpObj ent.User
+		userPreferences := userPreferencesTmpObj.Preferences
+		if err := runtime.FromStructPbValue(user.GetPreferences(), &userPreferences); err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
+		}
+		m.SetPreferences(userPreferences)
 	}
 	if user.GetGroup() != nil {
 		userGroup := int(user.GetGroup().GetId())
@@ -276,6 +285,14 @@ func (svc *UserServiceHandler) createBuilder(user *entpb.User) (*ent.UserCreate,
 	}
 	userName := user.GetName()
 	m.SetName(userName)
+	if user.GetPreferences() != nil {
+		var userPreferencesTmpObj ent.User
+		userPreferences := userPreferencesTmpObj.Preferences
+		if err := runtime.FromStructPbValue(user.GetPreferences(), &userPreferences); err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
+		}
+		m.SetPreferences(userPreferences)
+	}
 	if user.GetGroup() != nil {
 		userGroup := int(user.GetGroup().GetId())
 		m.SetGroupID(userGroup)

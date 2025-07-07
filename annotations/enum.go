@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package entproto
+package annotations
 
 import (
 	"errors"
@@ -121,7 +121,7 @@ func (e *enum) Verify(fld *gen.Field) error {
 	return nil
 }
 
-func extractEnumAnnotation(fld *gen.Field) (*enum, error) {
+func ExtractEnumAnnotation(fld *gen.Field) (*enum, error) {
 	annot, ok := fld.Annotations[EnumAnnotation]
 	if !ok {
 		return nil, fmt.Errorf("entproto: field %q does not have an entproto.Enum annotation", fld.Name)

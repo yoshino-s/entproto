@@ -37,20 +37,26 @@ type BinaryMarshallerUnmarshaller interface {
 }
 
 type converter struct {
+	G *generator
+
 	ToEntConversion              string
 	ToEntScannerConversion       string
 	ToEntConstructor             protogen.GoIdent
 	ToEntMarshallerConstructor   protogen.GoIdent
 	ToEntScannerConstructor      protogen.GoIdent
+	ToEntUnmarshal               protogen.GoIdent
 	ToEntModifier                string
 	ToProtoConversion            string
 	ToProtoConstructor           protogen.GoIdent
+	ToProtoConstructorWithError  protogen.GoIdent
 	toProtoMarshallerConstructor protogen.GoIdent
 	ToProtoValuer                string
 }
 
 func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...any) (*converter, error) {
-	out := &converter{}
+	out := &converter{
+		G: g,
+	}
 
 	var pbd protoreflect.FieldDescriptor
 	if len(pbds) == 0 {
@@ -135,15 +141,9 @@ func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...a
 			out.ToEntConstructor = g.GoImportPath.Ident(method)
 		}
 	case efld.IsJSON():
-		switch efld.Type.Ident {
-		case "[]string":
-		case "[]int32", "[]int64", "[]uint32", "[]uint64":
-			out.ToProtoConversion = ""
-		default:
-			return nil, fmt.Errorf("entproto: no mapping to ent field type %q", efld.Type.ConstName())
-		}
+		out.ToEntUnmarshal = protogen.GoImportPath(runtimePackage).Ident("FromStructPbValue")
 	default:
-		return nil, fmt.Errorf("entproto: no mapping to ent field type %q", efld.Type.ConstName())
+		return nil, fmt.Errorf("entproto(newConverter): no mapping to ent field type %q", efld.Type.ConstName())
 	}
 	return out, nil
 }
@@ -202,6 +202,8 @@ func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field
 	switch {
 	case md.FullName() == "google.protobuf.Timestamp":
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/timestamppb").Ident("New")
+	case md.FullName() == "google.protobuf.Value":
+		conv.ToProtoConstructorWithError = protogen.GoImportPath(runtimePackage).Ident("ToStructPbValue")
 	case isWrapperType(md):
 		fqn := md.FullName()
 		typ := strings.Split(string(fqn), ".")[2]

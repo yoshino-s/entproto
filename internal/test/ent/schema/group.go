@@ -8,6 +8,10 @@ import (
 	"github.com/yoshino-s/entproto"
 )
 
+type GroupMetadata struct {
+	Version string `json:"version,omitempty"`
+}
+
 type Group struct {
 	ent.Schema
 }
@@ -24,6 +28,14 @@ func (Group) Fields() []ent.Field {
 		field.String("name").
 			Annotations(
 				entproto.Field(2),
+			),
+		field.JSON("metadata", GroupMetadata{}).
+			Annotations(
+				entproto.Field(4),
+			),
+		field.JSON("tags", []string{}).
+			Annotations(
+				entproto.Field(5),
 			),
 	}
 }

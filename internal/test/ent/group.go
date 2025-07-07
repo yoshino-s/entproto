@@ -3,12 +3,14 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 )
 
 // Group is the model entity for the Group schema.
@@ -18,6 +20,10 @@ type Group struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Metadata holds the value of the "metadata" field.
+	Metadata schema.GroupMetadata `json:"metadata,omitempty"`
+	// Tags holds the value of the "tags" field.
+	Tags []string `json:"tags,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GroupQuery when eager-loading is set.
 	Edges        GroupEdges `json:"edges"`
@@ -47,6 +53,8 @@ func (*Group) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case group.FieldMetadata, group.FieldTags:
+			values[i] = new([]byte)
 		case group.FieldID:
 			values[i] = new(sql.NullInt64)
 		case group.FieldName:
@@ -77,6 +85,22 @@ func (gr *Group) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				gr.Name = value.String
+			}
+		case group.FieldMetadata:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field metadata", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gr.Metadata); err != nil {
+					return fmt.Errorf("unmarshal field metadata: %w", err)
+				}
+			}
+		case group.FieldTags:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field tags", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gr.Tags); err != nil {
+					return fmt.Errorf("unmarshal field tags: %w", err)
+				}
 			}
 		default:
 			gr.selectValues.Set(columns[i], values[i])
@@ -121,6 +145,12 @@ func (gr *Group) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", gr.ID))
 	builder.WriteString("name=")
 	builder.WriteString(gr.Name)
+	builder.WriteString(", ")
+	builder.WriteString("metadata=")
+	builder.WriteString(fmt.Sprintf("%v", gr.Metadata))
+	builder.WriteString(", ")
+	builder.WriteString("tags=")
+	builder.WriteString(fmt.Sprintf("%v", gr.Tags))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -13,7 +13,6 @@ import (
 
 func main() {
 	ext, _ := entproto.NewExtension(
-		entproto.SkipGenFile(),
 		entproto.WithProtoDir("./proto"),
 	)
 	if err := entc.Generate("./ent/schema/",

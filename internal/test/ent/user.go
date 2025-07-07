@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -28,6 +29,8 @@ type User struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// GroupID holds the value of the "group_id" field.
 	GroupID int `json:"group_id,omitempty"`
+	// Preferences holds the value of the "preferences" field.
+	Preferences map[string]interface{} `json:"preferences,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -59,6 +62,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case user.FieldPreferences:
+			values[i] = new([]byte)
 		case user.FieldID, user.FieldGroupID:
 			values[i] = new(sql.NullInt64)
 		case user.FieldName, user.FieldDescription, user.FieldGender:
@@ -116,6 +121,14 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.GroupID = int(value.Int64)
 			}
+		case user.FieldPreferences:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field preferences", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &u.Preferences); err != nil {
+					return fmt.Errorf("unmarshal field preferences: %w", err)
+				}
+			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
 		}
@@ -171,6 +184,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("group_id=")
 	builder.WriteString(fmt.Sprintf("%v", u.GroupID))
+	builder.WriteString(", ")
+	builder.WriteString("preferences=")
+	builder.WriteString(fmt.Sprintf("%v", u.Preferences))
 	builder.WriteByte(')')
 	return builder.String()
 }

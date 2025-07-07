@@ -8,17 +8,23 @@
     {{- if $conv.ToEntMarshallerConstructor.GoName }}
         var {{ .VarName }} {{ ident $conv.ToEntMarshallerConstructor}}
         if err := (&{{ .VarName }}).UnmarshalBinary( {{ $id }}); err != nil {
-            return nil, {{ statusErrf "InvalidArgument" "invalid argument: %s" "err" }}
+            return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
         }
     {{- else if $conv.ToEntScannerConstructor.GoName }}
         {{ .VarName }} := {{ ident $conv.ToEntScannerConstructor }}{}
         if err := (&{{ .VarName }}).Scan( {{ $id }} ); err != nil {
-            return nil, {{ statusErrf "InvalidArgument" "invalid argument: %s" "err" }}
+            return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
         }
     {{- else if $conv.ToEntConstructor.GoName }}
         {{ .VarName }} := {{ ident $conv.ToEntConstructor }}({{ $id }})
     {{- else if $conv.ToEntConversion }}
         {{ .VarName }} := {{ $conv.ToEntConversion }}({{ $id }})
+    {{- else if $conv.ToEntUnmarshal.GoName }}
+        var {{ .VarName }}TmpObj {{ $conv.G.EntPackage.Ident $conv.G.EntType.Name | ident }}
+        {{ .VarName }} := {{ .VarName }}TmpObj.{{ .Field.EntField.StructField }}
+        if err := {{ ident $conv.ToEntUnmarshal }}({{ $id }}, &{{ .VarName }}); err != nil {
+            return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
+        }
     {{- else }}
         {{ .VarName }} := {{ $id }}
     {{- end }}

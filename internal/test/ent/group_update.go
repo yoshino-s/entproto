@@ -9,9 +9,11 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
 	"github.com/yoshino-s/entproto/internal/test/ent/predicate"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -40,6 +42,32 @@ func (gu *GroupUpdate) SetNillableName(s *string) *GroupUpdate {
 	if s != nil {
 		gu.SetName(*s)
 	}
+	return gu
+}
+
+// SetMetadata sets the "metadata" field.
+func (gu *GroupUpdate) SetMetadata(sm schema.GroupMetadata) *GroupUpdate {
+	gu.mutation.SetMetadata(sm)
+	return gu
+}
+
+// SetNillableMetadata sets the "metadata" field if the given value is not nil.
+func (gu *GroupUpdate) SetNillableMetadata(sm *schema.GroupMetadata) *GroupUpdate {
+	if sm != nil {
+		gu.SetMetadata(*sm)
+	}
+	return gu
+}
+
+// SetTags sets the "tags" field.
+func (gu *GroupUpdate) SetTags(s []string) *GroupUpdate {
+	gu.mutation.SetTags(s)
+	return gu
+}
+
+// AppendTags appends s to the "tags" field.
+func (gu *GroupUpdate) AppendTags(s []string) *GroupUpdate {
+	gu.mutation.AppendTags(s)
 	return gu
 }
 
@@ -129,6 +157,17 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := gu.mutation.Name(); ok {
 		_spec.SetField(group.FieldName, field.TypeString, value)
 	}
+	if value, ok := gu.mutation.Metadata(); ok {
+		_spec.SetField(group.FieldMetadata, field.TypeJSON, value)
+	}
+	if value, ok := gu.mutation.Tags(); ok {
+		_spec.SetField(group.FieldTags, field.TypeJSON, value)
+	}
+	if value, ok := gu.mutation.AppendedTags(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, group.FieldTags, value)
+		})
+	}
 	if gu.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -207,6 +246,32 @@ func (guo *GroupUpdateOne) SetNillableName(s *string) *GroupUpdateOne {
 	if s != nil {
 		guo.SetName(*s)
 	}
+	return guo
+}
+
+// SetMetadata sets the "metadata" field.
+func (guo *GroupUpdateOne) SetMetadata(sm schema.GroupMetadata) *GroupUpdateOne {
+	guo.mutation.SetMetadata(sm)
+	return guo
+}
+
+// SetNillableMetadata sets the "metadata" field if the given value is not nil.
+func (guo *GroupUpdateOne) SetNillableMetadata(sm *schema.GroupMetadata) *GroupUpdateOne {
+	if sm != nil {
+		guo.SetMetadata(*sm)
+	}
+	return guo
+}
+
+// SetTags sets the "tags" field.
+func (guo *GroupUpdateOne) SetTags(s []string) *GroupUpdateOne {
+	guo.mutation.SetTags(s)
+	return guo
+}
+
+// AppendTags appends s to the "tags" field.
+func (guo *GroupUpdateOne) AppendTags(s []string) *GroupUpdateOne {
+	guo.mutation.AppendTags(s)
 	return guo
 }
 
@@ -325,6 +390,17 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 	}
 	if value, ok := guo.mutation.Name(); ok {
 		_spec.SetField(group.FieldName, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.Metadata(); ok {
+		_spec.SetField(group.FieldMetadata, field.TypeJSON, value)
+	}
+	if value, ok := guo.mutation.Tags(); ok {
+		_spec.SetField(group.FieldTags, field.TypeJSON, value)
+	}
+	if value, ok := guo.mutation.AppendedTags(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, group.FieldTags, value)
+		})
 	}
 	if guo.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -305,6 +305,16 @@ func GroupIDNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldGroupID))
 }
 
+// PreferencesIsNil applies the IsNil predicate on the "preferences" field.
+func PreferencesIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldPreferences))
+}
+
+// PreferencesNotNil applies the NotNil predicate on the "preferences" field.
+func PreferencesNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldPreferences))
+}
+
 // HasGroup applies the HasEdge predicate on the "group" edge.
 func HasGroup() predicate.User {
 	return predicate.User(func(s *sql.Selector) {

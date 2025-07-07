@@ -1,4 +1,4 @@
-package entproto
+package annotations
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func (f *filter) Name() string {
 	return FilterAnnotation
 }
 
-func extractFilterAnnotation(sch *gen.Field) (*filter, error) {
+func ExtractFilterAnnotation(sch *gen.Field) (*filter, error) {
 	annot, ok := sch.Annotations[FilterAnnotation]
 	if !ok {
 		return nil, nil // No filter annotation present

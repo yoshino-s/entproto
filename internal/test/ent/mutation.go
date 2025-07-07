@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
 	"github.com/yoshino-s/entproto/internal/test/ent/predicate"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -36,6 +37,9 @@ type GroupMutation struct {
 	typ           string
 	id            *int
 	name          *string
+	metadata      *schema.GroupMetadata
+	tags          *[]string
+	appendtags    []string
 	clearedFields map[string]struct{}
 	users         map[int]struct{}
 	removedusers  map[int]struct{}
@@ -179,6 +183,93 @@ func (m *GroupMutation) ResetName() {
 	m.name = nil
 }
 
+// SetMetadata sets the "metadata" field.
+func (m *GroupMutation) SetMetadata(sm schema.GroupMetadata) {
+	m.metadata = &sm
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *GroupMutation) Metadata() (r schema.GroupMetadata, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldMetadata(ctx context.Context) (v schema.GroupMetadata, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *GroupMutation) ResetMetadata() {
+	m.metadata = nil
+}
+
+// SetTags sets the "tags" field.
+func (m *GroupMutation) SetTags(s []string) {
+	m.tags = &s
+	m.appendtags = nil
+}
+
+// Tags returns the value of the "tags" field in the mutation.
+func (m *GroupMutation) Tags() (r []string, exists bool) {
+	v := m.tags
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTags returns the old "tags" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldTags(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTags is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTags requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTags: %w", err)
+	}
+	return oldValue.Tags, nil
+}
+
+// AppendTags adds s to the "tags" field.
+func (m *GroupMutation) AppendTags(s []string) {
+	m.appendtags = append(m.appendtags, s...)
+}
+
+// AppendedTags returns the list of values that were appended to the "tags" field in this mutation.
+func (m *GroupMutation) AppendedTags() ([]string, bool) {
+	if len(m.appendtags) == 0 {
+		return nil, false
+	}
+	return m.appendtags, true
+}
+
+// ResetTags resets all changes to the "tags" field.
+func (m *GroupMutation) ResetTags() {
+	m.tags = nil
+	m.appendtags = nil
+}
+
 // AddUserIDs adds the "users" edge to the User entity by ids.
 func (m *GroupMutation) AddUserIDs(ids ...int) {
 	if m.users == nil {
@@ -267,9 +358,15 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 3)
 	if m.name != nil {
 		fields = append(fields, group.FieldName)
+	}
+	if m.metadata != nil {
+		fields = append(fields, group.FieldMetadata)
+	}
+	if m.tags != nil {
+		fields = append(fields, group.FieldTags)
 	}
 	return fields
 }
@@ -281,6 +378,10 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case group.FieldName:
 		return m.Name()
+	case group.FieldMetadata:
+		return m.Metadata()
+	case group.FieldTags:
+		return m.Tags()
 	}
 	return nil, false
 }
@@ -292,6 +393,10 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 	switch name {
 	case group.FieldName:
 		return m.OldName(ctx)
+	case group.FieldMetadata:
+		return m.OldMetadata(ctx)
+	case group.FieldTags:
+		return m.OldTags(ctx)
 	}
 	return nil, fmt.Errorf("unknown Group field %s", name)
 }
@@ -307,6 +412,20 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case group.FieldMetadata:
+		v, ok := value.(schema.GroupMetadata)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	case group.FieldTags:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTags(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)
@@ -359,6 +478,12 @@ func (m *GroupMutation) ResetField(name string) error {
 	switch name {
 	case group.FieldName:
 		m.ResetName()
+		return nil
+	case group.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	case group.FieldTags:
+		m.ResetTags()
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)
@@ -458,6 +583,7 @@ type UserMutation struct {
 	description   *string
 	gender        *user.Gender
 	created_at    *time.Time
+	preferences   *map[string]interface{}
 	clearedFields map[string]struct{}
 	group         *int
 	clearedgroup  bool
@@ -770,6 +896,55 @@ func (m *UserMutation) ResetGroupID() {
 	delete(m.clearedFields, user.FieldGroupID)
 }
 
+// SetPreferences sets the "preferences" field.
+func (m *UserMutation) SetPreferences(value map[string]interface{}) {
+	m.preferences = &value
+}
+
+// Preferences returns the value of the "preferences" field in the mutation.
+func (m *UserMutation) Preferences() (r map[string]interface{}, exists bool) {
+	v := m.preferences
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPreferences returns the old "preferences" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPreferences(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreferences is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreferences requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreferences: %w", err)
+	}
+	return oldValue.Preferences, nil
+}
+
+// ClearPreferences clears the value of the "preferences" field.
+func (m *UserMutation) ClearPreferences() {
+	m.preferences = nil
+	m.clearedFields[user.FieldPreferences] = struct{}{}
+}
+
+// PreferencesCleared returns if the "preferences" field was cleared in this mutation.
+func (m *UserMutation) PreferencesCleared() bool {
+	_, ok := m.clearedFields[user.FieldPreferences]
+	return ok
+}
+
+// ResetPreferences resets all changes to the "preferences" field.
+func (m *UserMutation) ResetPreferences() {
+	m.preferences = nil
+	delete(m.clearedFields, user.FieldPreferences)
+}
+
 // ClearGroup clears the "group" edge to the Group entity.
 func (m *UserMutation) ClearGroup() {
 	m.clearedgroup = true
@@ -831,7 +1006,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
@@ -846,6 +1021,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.group != nil {
 		fields = append(fields, user.FieldGroupID)
+	}
+	if m.preferences != nil {
+		fields = append(fields, user.FieldPreferences)
 	}
 	return fields
 }
@@ -865,6 +1043,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case user.FieldGroupID:
 		return m.GroupID()
+	case user.FieldPreferences:
+		return m.Preferences()
 	}
 	return nil, false
 }
@@ -884,6 +1064,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreatedAt(ctx)
 	case user.FieldGroupID:
 		return m.OldGroupID(ctx)
+	case user.FieldPreferences:
+		return m.OldPreferences(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -928,6 +1110,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetGroupID(v)
 		return nil
+	case user.FieldPreferences:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreferences(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -967,6 +1156,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldGroupID) {
 		fields = append(fields, user.FieldGroupID)
 	}
+	if m.FieldCleared(user.FieldPreferences) {
+		fields = append(fields, user.FieldPreferences)
+	}
 	return fields
 }
 
@@ -986,6 +1178,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldGroupID:
 		m.ClearGroupID()
+		return nil
+	case user.FieldPreferences:
+		m.ClearPreferences()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -1009,6 +1204,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldGroupID:
 		m.ResetGroupID()
+		return nil
+	case user.FieldPreferences:
+		m.ResetPreferences()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

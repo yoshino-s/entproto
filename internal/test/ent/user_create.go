@@ -69,6 +69,12 @@ func (uc *UserCreate) SetNillableGroupID(i *int) *UserCreate {
 	return uc
 }
 
+// SetPreferences sets the "preferences" field.
+func (uc *UserCreate) SetPreferences(m map[string]interface{}) *UserCreate {
+	uc.mutation.SetPreferences(m)
+	return uc
+}
+
 // SetGroup sets the "group" edge to the Group entity.
 func (uc *UserCreate) SetGroup(g *Group) *UserCreate {
 	return uc.SetGroupID(g.ID)
@@ -164,6 +170,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if value, ok := uc.mutation.Preferences(); ok {
+		_spec.SetField(user.FieldPreferences, field.TypeJSON, value)
+		_node.Preferences = value
 	}
 	if nodes := uc.mutation.GroupIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -294,6 +304,24 @@ func (u *UserUpsert) ClearGroupID() *UserUpsert {
 	return u
 }
 
+// SetPreferences sets the "preferences" field.
+func (u *UserUpsert) SetPreferences(v map[string]interface{}) *UserUpsert {
+	u.Set(user.FieldPreferences, v)
+	return u
+}
+
+// UpdatePreferences sets the "preferences" field to the value that was provided on create.
+func (u *UserUpsert) UpdatePreferences() *UserUpsert {
+	u.SetExcluded(user.FieldPreferences)
+	return u
+}
+
+// ClearPreferences clears the value of the "preferences" field.
+func (u *UserUpsert) ClearPreferences() *UserUpsert {
+	u.SetNull(user.FieldPreferences)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -406,6 +434,27 @@ func (u *UserUpsertOne) UpdateGroupID() *UserUpsertOne {
 func (u *UserUpsertOne) ClearGroupID() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearGroupID()
+	})
+}
+
+// SetPreferences sets the "preferences" field.
+func (u *UserUpsertOne) SetPreferences(v map[string]interface{}) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetPreferences(v)
+	})
+}
+
+// UpdatePreferences sets the "preferences" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdatePreferences() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdatePreferences()
+	})
+}
+
+// ClearPreferences clears the value of the "preferences" field.
+func (u *UserUpsertOne) ClearPreferences() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearPreferences()
 	})
 }
 
@@ -686,6 +735,27 @@ func (u *UserUpsertBulk) UpdateGroupID() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearGroupID() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearGroupID()
+	})
+}
+
+// SetPreferences sets the "preferences" field.
+func (u *UserUpsertBulk) SetPreferences(v map[string]interface{}) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetPreferences(v)
+	})
+}
+
+// UpdatePreferences sets the "preferences" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdatePreferences() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdatePreferences()
+	})
+}
+
+// ClearPreferences clears the value of the "preferences" field.
+func (u *UserUpsertBulk) ClearPreferences() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearPreferences()
 	})
 }
 

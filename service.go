@@ -22,6 +22,8 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/yoshino-s/entproto/annotations"
+	"github.com/yoshino-s/entproto/convert"
 	"google.golang.org/protobuf/types/descriptorpb"
 	_ "google.golang.org/protobuf/types/known/emptypb"
 )
@@ -119,6 +121,8 @@ func (a *Adapter) createServiceResources(genType *gen.Type, methods Method) (ser
 }
 
 func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources, error) {
+	converter := a.converters[genType]
+
 	input := &descriptorpb.DescriptorProto{}
 	protoMessageFieldType := descriptorpb.FieldDescriptorProto_TYPE_MESSAGE
 	repeatedFieldLabel := descriptorpb.FieldDescriptorProto_LABEL_REPEATED
@@ -153,32 +157,32 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 				continue // Immutable fields are not included in Update requests.
 			}
 
-			var optionalFieldType fieldType
+			var optionalFieldType convert.FieldType
 			var err error
 			if genField.Type.Type != field.TypeEnum {
-				optionalFieldType, err = extractProtoTypeDetails(genField, genField.Name != "id")
+				optionalFieldType, err = converter.ExtractProtoTypeDetails(genField, input, genField.Name != "id")
 				if err != nil {
 					return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
 						genType.Name, genField.Name, err)
 				}
 			} else {
-				optionalFieldType = fieldType{
-					messageName: pascal(genType.Name + "_" + genField.Name + "_enum_value"),
-					protoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
-					repeated:    false,
+				optionalFieldType = convert.FieldType{
+					MessageName: pascal(genType.Name + "_" + genField.Name + "_enum_value"),
+					ProtoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
+					Repeated:    false,
 				}
 			}
 
 			input.Field = append(input.Field, &descriptorpb.FieldDescriptorProto{
 				Name:     strptr(snake(genField.Name)),
 				Number:   int32ptr(int32(len(input.Field) + 1)),
-				Type:     &optionalFieldType.protoType,
-				TypeName: strptr(optionalFieldType.messageName),
+				Type:     &optionalFieldType.ProtoType,
+				TypeName: strptr(optionalFieldType.MessageName),
 			})
 		}
 
 		for _, e := range genType.Edges {
-			descriptor, err := a.extractEdgeFieldDescriptor(genType, e)
+			descriptor, err := converter.ExtractEdgeFieldDescriptor(a.graph, genType, e)
 			if err != nil {
 				return methodResources{}, fmt.Errorf("entproto: unable to extract edge field descriptor for schema %q edge %q: %w",
 					genType.Name, e.Name, err)
@@ -257,45 +261,45 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 		}
 
 		for _, genField := range genType.Fields {
-			filterAnnotation, err := extractFilterAnnotation(genField)
+			filterAnnotation, err := annotations.ExtractFilterAnnotation(genField)
 			if err != nil {
 				return methodResources{}, fmt.Errorf("entproto: unable to decode entproto.Filter annotation for schema %q field %q: %w",
 					genType.Name, genField.Name, err)
 			}
 
 			if filterAnnotation != nil {
-				var optionalFieldType fieldType
+				var optionalFieldType convert.FieldType
 				var err error
 				if genField.Type.Type != field.TypeEnum {
-					optionalFieldType, err = extractProtoTypeDetails(genField, true)
+					optionalFieldType, err = converter.ExtractProtoTypeDetails(genField, input, true)
 					if err != nil {
 						return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
 							genType.Name, genField.Name, err)
 					}
 				} else {
-					optionalFieldType = fieldType{
-						messageName: pascal(genType.Name + "_" + genField.Name + "_enum_value"),
-						protoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
-						repeated:    false,
+					optionalFieldType = convert.FieldType{
+						MessageName: pascal(genType.Name + "_" + genField.Name + "_enum_value"),
+						ProtoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
+						Repeated:    false,
 					}
 				}
 
-				originalFieldType, err := extractProtoTypeDetails(genField)
+				originalFieldType, err := converter.ExtractProtoTypeDetails(genField, input)
 				if err != nil {
 					return methodResources{}, fmt.Errorf("entproto: unable to extract proto type details for schema %q field %q: %w",
 						genType.Name, genField.Name, err)
 				}
 
 				if genField.Type.Type == field.TypeEnum {
-					originalFieldType.messageName = fmt.Sprintf("%s.%s", genType.Name, originalFieldType.messageName)
+					originalFieldType.MessageName = fmt.Sprintf("%s.%s", genType.Name, originalFieldType.MessageName)
 				}
 
 				if filterAnnotation.Mode&FilterModeEQ != 0 {
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(snake(genField.Name)),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
-						Type:     &optionalFieldType.protoType,
-						TypeName: strptr(optionalFieldType.messageName),
+						Type:     &optionalFieldType.ProtoType,
+						TypeName: strptr(optionalFieldType.MessageName),
 					})
 				}
 				if filterAnnotation.Mode&FilterModeContains != 0 {
@@ -306,16 +310,16 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(fmt.Sprintf("%s_contains", snake(genField.Name))),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
-						Type:     &optionalFieldType.protoType,
-						TypeName: strptr(optionalFieldType.messageName),
+						Type:     &optionalFieldType.ProtoType,
+						TypeName: strptr(optionalFieldType.MessageName),
 					})
 				}
 				if filterAnnotation.Mode&FilterModeIn != 0 {
 					filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
 						Name:     strptr(fmt.Sprintf("%s_in", snake(genField.Name))),
 						Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
-						Type:     &originalFieldType.protoType,
-						TypeName: strptr(originalFieldType.messageName),
+						Type:     &originalFieldType.ProtoType,
+						TypeName: strptr(originalFieldType.MessageName),
 						Label:    &repeatedFieldLabel,
 					})
 				}
@@ -333,7 +337,7 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 					Name:     strptr(snake(name)),
 					Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
 					Type:     &protoMessageFieldType,
-					TypeName: strptr(typeMap[fieldType].optionalType),
+					TypeName: strptr(convert.TypeMap[fieldType].OptionalType),
 				})
 			}
 		}

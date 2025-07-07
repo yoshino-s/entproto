@@ -1,18 +1,4 @@
-// Copyright 2019-present Facebook
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package entproto
+package annotations
 
 import (
 	"fmt"
@@ -67,7 +53,7 @@ func TypeName(n string) FieldOption {
 	}
 }
 
-func extractFieldAnnotation(fld *gen.Field) (*pbfield, error) {
+func ExtractFieldAnnotation(fld *gen.Field) (*pbfield, error) {
 	annot, ok := fld.Annotations[FieldAnnotation]
 	if !ok {
 		return nil, fmt.Errorf("entproto: field %q does not have an entproto.Field annnoation", fld.Name)
@@ -83,7 +69,7 @@ func extractFieldAnnotation(fld *gen.Field) (*pbfield, error) {
 	return &out, nil
 }
 
-func extractEdgeAnnotation(edge *gen.Edge) (*pbfield, error) {
+func ExtractEdgeAnnotation(edge *gen.Edge) (*pbfield, error) {
 	annot, ok := edge.Annotations[FieldAnnotation]
 	if !ok {
 		return nil, fmt.Errorf("entproto: edge %q does not have an entproto.Field annotation", edge.Name)

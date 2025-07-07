@@ -54,6 +54,11 @@ func (User) Fields() []ent.Field {
 			Annotations(
 				entproto.Field(6),
 			),
+		field.JSON("preferences", map[string]any{}).
+			Optional().
+			Annotations(
+				entproto.Field(8),
+			),
 	}
 }
 

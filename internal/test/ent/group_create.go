@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -25,6 +26,18 @@ type GroupCreate struct {
 // SetName sets the "name" field.
 func (gc *GroupCreate) SetName(s string) *GroupCreate {
 	gc.mutation.SetName(s)
+	return gc
+}
+
+// SetMetadata sets the "metadata" field.
+func (gc *GroupCreate) SetMetadata(sm schema.GroupMetadata) *GroupCreate {
+	gc.mutation.SetMetadata(sm)
+	return gc
+}
+
+// SetTags sets the "tags" field.
+func (gc *GroupCreate) SetTags(s []string) *GroupCreate {
+	gc.mutation.SetTags(s)
 	return gc
 }
 
@@ -80,6 +93,12 @@ func (gc *GroupCreate) check() error {
 	if _, ok := gc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Group.name"`)}
 	}
+	if _, ok := gc.mutation.Metadata(); !ok {
+		return &ValidationError{Name: "metadata", err: errors.New(`ent: missing required field "Group.metadata"`)}
+	}
+	if _, ok := gc.mutation.Tags(); !ok {
+		return &ValidationError{Name: "tags", err: errors.New(`ent: missing required field "Group.tags"`)}
+	}
 	return nil
 }
 
@@ -110,6 +129,14 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.Name(); ok {
 		_spec.SetField(group.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := gc.mutation.Metadata(); ok {
+		_spec.SetField(group.FieldMetadata, field.TypeJSON, value)
+		_node.Metadata = value
+	}
+	if value, ok := gc.mutation.Tags(); ok {
+		_spec.SetField(group.FieldTags, field.TypeJSON, value)
+		_node.Tags = value
 	}
 	if nodes := gc.mutation.UsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -191,6 +218,30 @@ func (u *GroupUpsert) UpdateName() *GroupUpsert {
 	return u
 }
 
+// SetMetadata sets the "metadata" field.
+func (u *GroupUpsert) SetMetadata(v schema.GroupMetadata) *GroupUpsert {
+	u.Set(group.FieldMetadata, v)
+	return u
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateMetadata() *GroupUpsert {
+	u.SetExcluded(group.FieldMetadata)
+	return u
+}
+
+// SetTags sets the "tags" field.
+func (u *GroupUpsert) SetTags(v []string) *GroupUpsert {
+	u.Set(group.FieldTags, v)
+	return u
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateTags() *GroupUpsert {
+	u.SetExcluded(group.FieldTags)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -242,6 +293,34 @@ func (u *GroupUpsertOne) SetName(v string) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateName() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *GroupUpsertOne) SetMetadata(v schema.GroupMetadata) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateMetadata() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *GroupUpsertOne) SetTags(v []string) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateTags() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateTags()
 	})
 }
 
@@ -459,6 +538,34 @@ func (u *GroupUpsertBulk) SetName(v string) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateName() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateName()
+	})
+}
+
+// SetMetadata sets the "metadata" field.
+func (u *GroupUpsertBulk) SetMetadata(v schema.GroupMetadata) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetMetadata(v)
+	})
+}
+
+// UpdateMetadata sets the "metadata" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateMetadata() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateMetadata()
+	})
+}
+
+// SetTags sets the "tags" field.
+func (u *GroupUpsertBulk) SetTags(v []string) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetTags(v)
+	})
+}
+
+// UpdateTags sets the "tags" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateTags() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateTags()
 	})
 }
 

@@ -24,6 +24,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldGroupID holds the string denoting the group_id field in the database.
 	FieldGroupID = "group_id"
+	// FieldPreferences holds the string denoting the preferences field in the database.
+	FieldPreferences = "preferences"
 	// EdgeGroup holds the string denoting the group edge name in mutations.
 	EdgeGroup = "group"
 	// Table holds the table name of the user in the database.
@@ -45,6 +47,7 @@ var Columns = []string{
 	FieldGender,
 	FieldCreatedAt,
 	FieldGroupID,
+	FieldPreferences,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

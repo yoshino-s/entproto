@@ -24,6 +24,7 @@ import (
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 	"github.com/yoshino-s/entproto"
+	"github.com/yoshino-s/entproto/convert"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -80,7 +81,7 @@ func processFile(gen *protogen.Plugin, file *protogen.File, graph *gen.Graph) er
 		}
 		sg, err := newMessageGenerator(gen, file, graph, adapter, m, goImportPath)
 		if err != nil {
-			if errors.Is(err, entproto.ErrSchemaSkipped) {
+			if errors.Is(err, convert.ErrSchemaSkipped) {
 				continue
 			}
 			return err

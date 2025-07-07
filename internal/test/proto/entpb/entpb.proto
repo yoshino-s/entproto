@@ -5,6 +5,8 @@ package entpb;
 
 import "google/protobuf/empty.proto";
 
+import "google/protobuf/struct.proto";
+
 import "google/protobuf/timestamp.proto";
 
 import "google/protobuf/wrappers.proto";
@@ -16,6 +18,10 @@ message Group {
 
   string name = 2;
 
+  google.protobuf.Value metadata = 4;
+
+  google.protobuf.Value tags = 5;
+
   repeated User users = 3;
 }
 
@@ -24,7 +30,11 @@ message UpdateGroupRequest {
 
   google.protobuf.StringValue name = 2;
 
-  repeated User users = 3;
+  google.protobuf.Value metadata = 3;
+
+  google.protobuf.Value tags = 4;
+
+  repeated User users = 5;
 }
 
 message ListGroupFilter {
@@ -63,6 +73,8 @@ message User {
 
   google.protobuf.Int32Value group_id = 6;
 
+  google.protobuf.Value preferences = 8;
+
   Group group = 7;
 
   enum Gender {
@@ -89,7 +101,9 @@ message UpdateUserRequest {
 
   google.protobuf.Int32Value group_id = 5;
 
-  Group group = 6;
+  google.protobuf.Value preferences = 6;
+
+  Group group = 7;
 }
 
 message ListUserFilter {

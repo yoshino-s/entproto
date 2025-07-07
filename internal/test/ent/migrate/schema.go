@@ -12,6 +12,8 @@ var (
 	GroupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
+		{Name: "metadata", Type: field.TypeJSON},
+		{Name: "tags", Type: field.TypeJSON},
 	}
 	// GroupsTable holds the schema information for the "groups" table.
 	GroupsTable = &schema.Table{
@@ -26,6 +28,7 @@ var (
 		{Name: "description", Type: field.TypeString, Nullable: true},
 		{Name: "gender", Type: field.TypeEnum, Enums: []string{"male", "female"}},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "preferences", Type: field.TypeJSON, Nullable: true},
 		{Name: "group_id", Type: field.TypeInt, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
@@ -36,7 +39,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "users_groups_users",
-				Columns:    []*schema.Column{UsersColumns[5]},
+				Columns:    []*schema.Column{UsersColumns[6]},
 				RefColumns: []*schema.Column{GroupsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

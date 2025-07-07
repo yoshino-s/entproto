@@ -8,6 +8,7 @@ import (
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
 	user "github.com/yoshino-s/entproto/internal/test/ent/user"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
+	runtime "github.com/yoshino-s/entproto/runtime"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
@@ -53,6 +54,11 @@ func ToProtoUser(e *ent.User) (*entpb.User, error) {
 	v.Id = id
 	name := e.Name
 	v.Name = name
+	preferences, err := runtime.ToStructPbValue(e.Preferences)
+	if err != nil {
+		return nil, err
+	}
+	v.Preferences = preferences
 	if edg := e.Edges.Group; edg != nil {
 		x, err := ToProtoGroup(edg)
 		if err != nil {
