@@ -9,8 +9,8 @@ require (
 	github.com/go-errors/errors v1.5.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/google/uuid v1.6.0
+	github.com/gookit/goutil v0.7.0
 	github.com/jhump/protoreflect/v2 v2.0.0-beta.2
-	github.com/jinzhu/copier v0.4.0
 	github.com/smartystreets/goconvey v1.8.1
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.27.0

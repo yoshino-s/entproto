@@ -332,12 +332,12 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 				genType.Name, err)
 		}
 		if extraFilterAnnotation != nil {
-			for name, fieldType := range extraFilterAnnotation.ExtraFields {
+			for _, descriptor := range extraFilterAnnotation.ExtraFields {
 				filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
-					Name:     strptr(snake(name)),
+					Name:     strptr(snake(descriptor.Name)),
 					Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
 					Type:     &protoMessageFieldType,
-					TypeName: strptr(convert.TypeMap[fieldType].OptionalType),
+					TypeName: strptr(convert.TypeMap[descriptor.Info.Type].OptionalType),
 				})
 			}
 		}
