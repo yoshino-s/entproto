@@ -21,7 +21,7 @@ func ExtraFilter(extraFields ...ent.Field) *extraFilter {
 }
 
 type extraFilter struct {
-	ExtraFields []*field.Descriptor `json:"extra_fields"`
+	ExtraFields []*field.Descriptor `json:"extra_fields" mapstructure:"extra_fields"`
 }
 
 func (f *extraFilter) Name() string {

@@ -17,6 +17,9 @@ func (User) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		entproto.Message(),
 		entproto.Service(),
+		entproto.ExtraFilter(
+			field.String("prefix"),
+		),
 	}
 }
 
