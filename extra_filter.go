@@ -12,7 +12,7 @@ import (
 
 const ExtraFilterAnnotation = "ProtoExtraFilter"
 
-func ExtraFilter(extraFields []ent.Field) *extraFilter {
+func ExtraFilter(extraFields ...ent.Field) *extraFilter {
 	return &extraFilter{
 		ExtraFields: arrutil.Map(extraFields, func(f ent.Field) (*field.Descriptor, bool) {
 			return f.Descriptor(), true
