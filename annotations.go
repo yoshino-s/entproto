@@ -39,4 +39,8 @@ var (
 
 	SkipAnnotation = annotations.SkipAnnotation
 	Skip           = annotations.Skip
+
+	ExtraFilterAnnotation        = annotations.ExtraFilterAnnotation
+	ExtraFilter                  = annotations.ExtraFilter
+	ExtractExtraFilterAnnotation = annotations.ExtractExtraFilterAnnotation
 )

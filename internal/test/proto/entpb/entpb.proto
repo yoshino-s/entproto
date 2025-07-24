@@ -122,6 +122,8 @@ message ListUserFilter {
   repeated google.protobuf.Timestamp created_at_in = 7;
 
   google.protobuf.StringValue prefix = 8;
+
+  repeated string prefix_in = 9;
 }
 
 message ListUserRequest {

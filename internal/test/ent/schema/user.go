@@ -18,7 +18,13 @@ func (User) Annotations() []schema.Annotation {
 		entproto.Message(),
 		entproto.Service(),
 		entproto.ExtraFilter(
-			field.String("prefix"),
+			field.String("prefix").Annotations(
+				entproto.Filter(
+					entproto.WithFilterMode(
+						entproto.FilterModeIn | entproto.FilterModeEQ,
+					),
+				),
+			),
 		),
 	}
 }

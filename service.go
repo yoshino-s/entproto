@@ -260,7 +260,18 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 			},
 		}
 
-		for _, genField := range genType.Fields {
+		extraFilterAnnotation, err := annotations.ExtractExtraFilterAnnotation(genType)
+		if err != nil {
+			return methodResources{}, fmt.Errorf("entproto: unable to decode entproto.ExtraFilter annotation for schema %q: %w",
+				genType.Name, err)
+		}
+
+		fields := append([]*gen.Field{genType.ID}, genType.Fields...)
+		if extraFilterAnnotation != nil {
+			fields = append(fields, extraFilterAnnotation.ExtraFields...)
+		}
+
+		for _, genField := range fields {
 			filterAnnotation, err := annotations.ExtractFilterAnnotation(genField)
 			if err != nil {
 				return methodResources{}, fmt.Errorf("entproto: unable to decode entproto.Filter annotation for schema %q field %q: %w",
@@ -323,22 +334,6 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 						Label:    &repeatedFieldLabel,
 					})
 				}
-			}
-		}
-
-		extraFilterAnnotation, err := extractExtraFilterAnnotation(genType)
-		if err != nil {
-			return methodResources{}, fmt.Errorf("entproto: unable to decode entproto.ExtraFilter annotation for schema %q: %w",
-				genType.Name, err)
-		}
-		if extraFilterAnnotation != nil {
-			for _, descriptor := range extraFilterAnnotation.ExtraFields {
-				filterMessage.Field = append(filterMessage.Field, &descriptorpb.FieldDescriptorProto{
-					Name:     strptr(snake(descriptor.Name)),
-					Number:   int32ptr(int32(len(filterMessage.Field) + 1)),
-					Type:     &protoMessageFieldType,
-					TypeName: strptr(convert.TypeMap[descriptor.Info.Type].OptionalType),
-				})
 			}
 		}
 
