@@ -117,6 +117,11 @@ func NewValue(v any) (*structpb.Value, error) {
 			return nil, err
 		}
 		return NewListValue(v2), nil
+	case reflect.Pointer:
+		if value.IsNil() {
+			return NewNullValue(), nil
+		}
+		return NewValue(value.Elem().Interface())
 	}
 
 	return nil, protoimpl.X.NewError("invalid type: %T", v)
