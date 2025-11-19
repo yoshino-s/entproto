@@ -43,18 +43,10 @@
     }
 
     func WrapProto{{ .EntType.Name }}(e *{{ .EntPackage.Ident .EntType.Name | ident }}, err error) (*{{ qualify $protoPkg .EntType.Name }}, error) {
-        switch {
-            case err == nil:
-                return ToProto{{ .EntType.Name }}(e)
-            case {{ .EntPackage.Ident "IsNotFound" | ident }}(err):
-                return nil, {{ statusErrf "CodeNotFound" "not found: %s" "err" }}
-            case {{ qualify "entgo.io/ent/dialect/sql/sqlgraph" "IsUniqueConstraintError" }}(err):
-                return nil, {{ statusErrf "CodeAlreadyExists" "already exists: %s" "err" }}
-            case {{ .EntPackage.Ident "IsConstraintError" | ident }}(err):
-                return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
-            default:
-                return nil, {{ statusErrf "CodeInternal" "internal error: %s" "err" }}
+        if err == nil {
+            return ToProto{{ .EntType.Name }}(e)
         }
+        return nil, wrapError(err)
     }
 {{ end }}
 
@@ -74,18 +66,10 @@
     }
 
     func WrapProto{{ .EntType.Name }}List(e []*{{ .EntPackage.Ident .EntType.Name | ident }}, err error) ([]*{{ qualify $protoPkg .EntType.Name }}, error) {
-        switch {
-            case err == nil:
-                return ToProto{{ .EntType.Name }}List(e)
-            case {{ .EntPackage.Ident "IsNotFound" | ident }}(err):
-                return nil, {{ statusErrf "CodeNotFound" "not found: %s" "err" }}
-            case {{ qualify "entgo.io/ent/dialect/sql/sqlgraph" "IsUniqueConstraintError" }}(err):
-                return nil, {{ statusErrf "CodeAlreadyExists" "already exists: %s" "err" }}
-            case {{ .EntPackage.Ident "IsConstraintError" | ident }}(err):
-                return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
-            default:
-                return nil, {{ statusErrf "CodeInternal" "internal error: %s" "err" }}
+        if err == nil {
+            return ToProto{{ .EntType.Name }}List(e)
         }
+        return nil, wrapError(err)
     }
 {{ end }}
 

@@ -19,6 +19,8 @@ func wrapError(err error) error {
 		return connect.NewError(connect.CodeAlreadyExists, errors.Errorf("already exists: %s", err))
 	case ent.IsConstraintError(err):
 		return connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
+	case errors.As(err, &connect.Error{}):
+		return err
 	default:
 		return connect.NewError(connect.CodeInternal, errors.Errorf("internal error: %s", err))
 	}

@@ -3,7 +3,6 @@ package entpbservice
 
 import (
 	connect "connectrpc.com/connect"
-	sqlgraph "entgo.io/ent/dialect/sql/sqlgraph"
 	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
@@ -38,18 +37,10 @@ func ToProtoGroup(e *ent.Group) (*entpb.Group, error) {
 }
 
 func WrapProtoGroup(e *ent.Group, err error) (*entpb.Group, error) {
-	switch {
-	case err == nil:
+	if err == nil {
 		return ToProtoGroup(e)
-	case ent.IsNotFound(err):
-		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
-	case sqlgraph.IsUniqueConstraintError(err):
-		return nil, connect.NewError(connect.CodeAlreadyExists, errors.Errorf("already exists: %s", err))
-	case ent.IsConstraintError(err):
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-	default:
-		return nil, connect.NewError(connect.CodeInternal, errors.Errorf("internal error: %s", err))
 	}
+	return nil, wrapError(err)
 }
 
 // ToProtoGroupList transforms a list of ent type to a list of pb type
@@ -66,16 +57,8 @@ func ToProtoGroupList(e []*ent.Group) ([]*entpb.Group, error) {
 }
 
 func WrapProtoGroupList(e []*ent.Group, err error) ([]*entpb.Group, error) {
-	switch {
-	case err == nil:
+	if err == nil {
 		return ToProtoGroupList(e)
-	case ent.IsNotFound(err):
-		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
-	case sqlgraph.IsUniqueConstraintError(err):
-		return nil, connect.NewError(connect.CodeAlreadyExists, errors.Errorf("already exists: %s", err))
-	case ent.IsConstraintError(err):
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-	default:
-		return nil, connect.NewError(connect.CodeInternal, errors.Errorf("internal error: %s", err))
 	}
+	return nil, wrapError(err)
 }

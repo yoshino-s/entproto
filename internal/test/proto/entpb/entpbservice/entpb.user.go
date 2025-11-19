@@ -3,7 +3,6 @@ package entpbservice
 
 import (
 	connect "connectrpc.com/connect"
-	sqlgraph "entgo.io/ent/dialect/sql/sqlgraph"
 	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
 	user "github.com/yoshino-s/entproto/internal/test/ent/user"
@@ -70,18 +69,10 @@ func ToProtoUser(e *ent.User) (*entpb.User, error) {
 }
 
 func WrapProtoUser(e *ent.User, err error) (*entpb.User, error) {
-	switch {
-	case err == nil:
+	if err == nil {
 		return ToProtoUser(e)
-	case ent.IsNotFound(err):
-		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
-	case sqlgraph.IsUniqueConstraintError(err):
-		return nil, connect.NewError(connect.CodeAlreadyExists, errors.Errorf("already exists: %s", err))
-	case ent.IsConstraintError(err):
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-	default:
-		return nil, connect.NewError(connect.CodeInternal, errors.Errorf("internal error: %s", err))
 	}
+	return nil, wrapError(err)
 }
 
 // ToProtoUserList transforms a list of ent type to a list of pb type
@@ -98,16 +89,8 @@ func ToProtoUserList(e []*ent.User) ([]*entpb.User, error) {
 }
 
 func WrapProtoUserList(e []*ent.User, err error) ([]*entpb.User, error) {
-	switch {
-	case err == nil:
+	if err == nil {
 		return ToProtoUserList(e)
-	case ent.IsNotFound(err):
-		return nil, connect.NewError(connect.CodeNotFound, errors.Errorf("not found: %s", err))
-	case sqlgraph.IsUniqueConstraintError(err):
-		return nil, connect.NewError(connect.CodeAlreadyExists, errors.Errorf("already exists: %s", err))
-	case ent.IsConstraintError(err):
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-	default:
-		return nil, connect.NewError(connect.CodeInternal, errors.Errorf("internal error: %s", err))
 	}
+	return nil, wrapError(err)
 }

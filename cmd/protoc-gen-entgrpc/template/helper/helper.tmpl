@@ -13,6 +13,8 @@ func wrapError(err error) error {
             return {{ statusErrf "CodeAlreadyExists" "already exists: %s" "err" }}
         case {{ .EntPackage.Ident "IsConstraintError" | ident }}(err):
             return {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
+        case {{ qualify "github.com/go-errors/errors" "As" }}(err, &{{ .ConnectPackage.Ident "Error" | ident }}{}):
+            return err
         default:
             return {{ statusErrf "CodeInternal" "internal error: %s" "err" }}
     }
