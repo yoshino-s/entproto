@@ -8,6 +8,7 @@ require (
 	github.com/bufbuild/protocompile v0.14.1
 	github.com/go-errors/errors v1.5.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
+	github.com/goccy/go-json v0.10.5
 	github.com/google/uuid v1.6.0
 	github.com/gookit/goutil v0.7.0
 	github.com/jhump/protoreflect/v2 v2.0.0-beta.2
