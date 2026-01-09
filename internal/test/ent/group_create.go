@@ -11,7 +11,6 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
-	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -30,8 +29,8 @@ func (gc *GroupCreate) SetName(s string) *GroupCreate {
 }
 
 // SetMetadata sets the "metadata" field.
-func (gc *GroupCreate) SetMetadata(sm schema.GroupMetadata) *GroupCreate {
-	gc.mutation.SetMetadata(sm)
+func (gc *GroupCreate) SetMetadata(m map[string]string) *GroupCreate {
+	gc.mutation.SetMetadata(m)
 	return gc
 }
 
@@ -219,7 +218,7 @@ func (u *GroupUpsert) UpdateName() *GroupUpsert {
 }
 
 // SetMetadata sets the "metadata" field.
-func (u *GroupUpsert) SetMetadata(v schema.GroupMetadata) *GroupUpsert {
+func (u *GroupUpsert) SetMetadata(v map[string]string) *GroupUpsert {
 	u.Set(group.FieldMetadata, v)
 	return u
 }
@@ -297,7 +296,7 @@ func (u *GroupUpsertOne) UpdateName() *GroupUpsertOne {
 }
 
 // SetMetadata sets the "metadata" field.
-func (u *GroupUpsertOne) SetMetadata(v schema.GroupMetadata) *GroupUpsertOne {
+func (u *GroupUpsertOne) SetMetadata(v map[string]string) *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.SetMetadata(v)
 	})
@@ -542,7 +541,7 @@ func (u *GroupUpsertBulk) UpdateName() *GroupUpsertBulk {
 }
 
 // SetMetadata sets the "metadata" field.
-func (u *GroupUpsertBulk) SetMetadata(v schema.GroupMetadata) *GroupUpsertBulk {
+func (u *GroupUpsertBulk) SetMetadata(v map[string]string) *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.SetMetadata(v)
 	})

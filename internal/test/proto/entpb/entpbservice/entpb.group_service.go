@@ -5,7 +5,6 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	gen "entgo.io/ent/entc/gen"
-	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
 	group "github.com/yoshino-s/entproto/internal/test/ent/group"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
@@ -82,11 +81,7 @@ func (svc *GroupServiceHandler) Update(ctx context.Context, req *connect.Request
 	groupID := int(group.GetId())
 	m := svc.Client.Group.UpdateOneID(groupID)
 	if group.GetMetadata() != nil {
-		var groupMetadataTmpObj ent.Group
-		groupMetadata := groupMetadataTmpObj.Metadata
-		if err := runtime.FromStructPbValue(group.GetMetadata(), &groupMetadata); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-		}
+		groupMetadata := group.GetMetadata()
 		m.SetMetadata(groupMetadata)
 	}
 	if group.GetName() != nil {
@@ -94,11 +89,7 @@ func (svc *GroupServiceHandler) Update(ctx context.Context, req *connect.Request
 		m.SetName(groupName)
 	}
 	if group.GetTags() != nil {
-		var groupTagsTmpObj ent.Group
-		groupTags := groupTagsTmpObj.Tags
-		if err := runtime.FromStructPbValue(group.GetTags(), &groupTags); err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-		}
+		groupTags := group.GetTags()
 		m.SetTags(groupTags)
 	}
 	for _, item := range group.GetUsers() {
@@ -214,19 +205,11 @@ func (svc *GroupServiceHandler) BuildListQuery(ctx context.Context, req *connect
 
 func (svc *GroupServiceHandler) createBuilder(group *entpb.Group) (*ent.GroupCreate, error) {
 	m := svc.Client.Group.Create()
-	var groupMetadataTmpObj ent.Group
-	groupMetadata := groupMetadataTmpObj.Metadata
-	if err := runtime.FromStructPbValue(group.GetMetadata(), &groupMetadata); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-	}
+	groupMetadata := group.GetMetadata()
 	m.SetMetadata(groupMetadata)
 	groupName := group.GetName()
 	m.SetName(groupName)
-	var groupTagsTmpObj ent.Group
-	groupTags := groupTagsTmpObj.Tags
-	if err := runtime.FromStructPbValue(group.GetTags(), &groupTags); err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
-	}
+	groupTags := group.GetTags()
 	m.SetTags(groupTags)
 	for _, item := range group.GetUsers() {
 		users := int(item.GetId())

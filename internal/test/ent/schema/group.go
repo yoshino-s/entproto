@@ -23,13 +23,21 @@ func (Group) Annotations() []schema.Annotation {
 	}
 }
 
+type SomeStruct struct {
+	StringField string
+
+	SubField struct {
+		IntField int32
+	}
+}
+
 func (Group) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").
 			Annotations(
 				entproto.Field(2),
 			),
-		field.JSON("metadata", GroupMetadata{}).
+		field.JSON("metadata", map[string]string{}).
 			Annotations(
 				entproto.Field(4),
 			),

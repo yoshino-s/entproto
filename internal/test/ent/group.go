@@ -10,7 +10,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
-	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 )
 
 // Group is the model entity for the Group schema.
@@ -21,7 +20,7 @@ type Group struct {
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Metadata holds the value of the "metadata" field.
-	Metadata schema.GroupMetadata `json:"metadata,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 	// Tags holds the value of the "tags" field.
 	Tags []string `json:"tags,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.

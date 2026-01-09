@@ -141,7 +141,12 @@ func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...a
 			out.ToEntConstructor = g.GoImportPath.Ident(method)
 		}
 	case efld.IsJSON():
-		out.ToEntUnmarshal = protogen.GoImportPath(runtimePackage).Ident("FromStructPbValue")
+		msg := pbd.Message()
+		if msg != nil && msg.IsMapEntry() || pbd.IsList() {
+			//
+		} else {
+			out.ToEntUnmarshal = protogen.GoImportPath(runtimePackage).Ident("FromStructPbValue")
+		}
 	default:
 		return nil, fmt.Errorf("entproto(newConverter): no mapping to ent field type %q", efld.Type.ConstName())
 	}
@@ -204,6 +209,8 @@ func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/timestamppb").Ident("New")
 	case md.FullName() == "google.protobuf.Value":
 		conv.ToProtoConstructorWithError = protogen.GoImportPath(runtimePackage).Ident("ToStructPbValue")
+	case strings.HasSuffix(string(md.FullName()), "Entry"):
+		//
 	case isWrapperType(md):
 		fqn := md.FullName()
 		typ := strings.Split(string(fqn), ".")[2]

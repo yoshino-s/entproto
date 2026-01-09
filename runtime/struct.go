@@ -7,7 +7,9 @@ import (
 )
 
 func ToStructPbValue(v any) (*structpb.Value, error) {
-	return structpb_wrapper.NewValue(v)
+	mapValue := map[string]any{}
+	mapstructure.Decode(v, &mapValue)
+	return structpb_wrapper.NewValue(mapValue)
 }
 
 func FromStructPbValue(fro *structpb.Value, dst any) error {

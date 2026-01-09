@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
 	"github.com/yoshino-s/entproto/internal/test/ent/predicate"
-	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -46,16 +45,8 @@ func (gu *GroupUpdate) SetNillableName(s *string) *GroupUpdate {
 }
 
 // SetMetadata sets the "metadata" field.
-func (gu *GroupUpdate) SetMetadata(sm schema.GroupMetadata) *GroupUpdate {
-	gu.mutation.SetMetadata(sm)
-	return gu
-}
-
-// SetNillableMetadata sets the "metadata" field if the given value is not nil.
-func (gu *GroupUpdate) SetNillableMetadata(sm *schema.GroupMetadata) *GroupUpdate {
-	if sm != nil {
-		gu.SetMetadata(*sm)
-	}
+func (gu *GroupUpdate) SetMetadata(m map[string]string) *GroupUpdate {
+	gu.mutation.SetMetadata(m)
 	return gu
 }
 
@@ -250,16 +241,8 @@ func (guo *GroupUpdateOne) SetNillableName(s *string) *GroupUpdateOne {
 }
 
 // SetMetadata sets the "metadata" field.
-func (guo *GroupUpdateOne) SetMetadata(sm schema.GroupMetadata) *GroupUpdateOne {
-	guo.mutation.SetMetadata(sm)
-	return guo
-}
-
-// SetNillableMetadata sets the "metadata" field if the given value is not nil.
-func (guo *GroupUpdateOne) SetNillableMetadata(sm *schema.GroupMetadata) *GroupUpdateOne {
-	if sm != nil {
-		guo.SetMetadata(*sm)
-	}
+func (guo *GroupUpdateOne) SetMetadata(m map[string]string) *GroupUpdateOne {
+	guo.mutation.SetMetadata(m)
 	return guo
 }
 

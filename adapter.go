@@ -312,6 +312,9 @@ func (a *Adapter) extractDepPaths(m *descriptorpb.DescriptorProto) ([]string, er
 					importPath := relFileName(depPackageName)
 					out = append(out, *importPath)
 				}
+			} else if fld.TypeName != nil && strings.HasSuffix(*fld.TypeName, "Entry") {
+				// skip
+				continue
 			} else {
 				return nil, fmt.Errorf("entproto: failed extracting deps, unknown path for %s", fieldTypeName)
 			}

@@ -7,23 +7,23 @@ import (
 )
 
 type TestStruct struct {
-	StringField     string
-	IntField        int32
-	BoolField       bool
-	unexportedField string
+	StringField     string `mapstructure:"string_field"`
+	IntField        int32  `mapstructure:"int_field"`
+	BoolField       bool   `mapstructure:"bool_field"`
+	unexportedField string `mapstructure:"unexported_field"`
 
-	ListField []string
-	MapField  map[string]int32
+	ListField []string         `mapstructure:"list_field"`
+	MapField  map[string]int32 `mapstructure:"map_field"`
 
-	NestedField     NestedStruct
-	ListNestedField []NestedStruct
-	MapNestedField  map[string]NestedStruct
+	NestedField     NestedStruct            `mapstructure:"nested_field"`
+	ListNestedField []NestedStruct          `mapstructure:"list_nested_field"`
+	MapNestedField  map[string]NestedStruct `mapstructure:"map_nested_field"`
 
-	AnyField any
+	AnyField any `mapstructure:"any_field"`
 }
 
 type NestedStruct struct {
-	A string
+	A string `mapstructure:"a"`
 }
 
 func TestStruct2Proto(t *testing.T) {

@@ -171,10 +171,11 @@ func (c *Converter) toProtoFieldDescriptor(f *gen.Field, msg *descriptorpb.Descr
 
 func (c *Converter) ExtractProtoTypeDetails(f *gen.Field, msg *descriptorpb.DescriptorProto, optional ...bool) (FieldType, error) {
 	if f.Type.Type == field.TypeJSON {
-		return FieldType{
-			ProtoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
-			MessageName: "google.protobuf.Value",
-		}, nil
+		r, err := c.identToFieldType(msg, f.Name, f.Type.Ident)
+		if err != nil {
+			return FieldType{}, err
+		}
+		return r, nil
 	}
 
 	cfg, ok := TypeMap[f.Type.Type]

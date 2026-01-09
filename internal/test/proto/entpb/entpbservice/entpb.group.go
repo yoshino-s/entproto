@@ -6,7 +6,6 @@ import (
 	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
-	runtime "github.com/yoshino-s/entproto/runtime"
 )
 
 // ToProtoGroup transforms the ent type to the pb type
@@ -14,17 +13,11 @@ func ToProtoGroup(e *ent.Group) (*entpb.Group, error) {
 	v := &entpb.Group{}
 	id := int32(e.ID)
 	v.Id = id
-	metadata, err := runtime.ToStructPbValue(e.Metadata)
-	if err != nil {
-		return nil, err
-	}
+	metadata := e.Metadata
 	v.Metadata = metadata
 	name := e.Name
 	v.Name = name
-	tags, err := runtime.ToStructPbValue(e.Tags)
-	if err != nil {
-		return nil, err
-	}
+	tags := e.Tags
 	v.Tags = tags
 	{
 		x, err := ToProtoUserList(e.Edges.Users)

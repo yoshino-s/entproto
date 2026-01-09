@@ -173,12 +173,16 @@ func (a *Adapter) genMethodProtos(genType *gen.Type, m Method) (methodResources,
 				}
 			}
 
-			input.Field = append(input.Field, &descriptorpb.FieldDescriptorProto{
+			field := &descriptorpb.FieldDescriptorProto{
 				Name:     strptr(snake(genField.Name)),
 				Number:   int32ptr(int32(len(input.Field) + 1)),
 				Type:     &optionalFieldType.ProtoType,
 				TypeName: strptr(optionalFieldType.MessageName),
-			})
+			}
+			if optionalFieldType.Repeated {
+				field.Label = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum()
+			}
+			input.Field = append(input.Field, field)
 		}
 
 		for _, e := range genType.Edges {
