@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -11,6 +12,7 @@ import (
 	"entgo.io/ent/entc/gen"
 	entFieldPkg "entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto"
+	"github.com/yoshino-s/entproto/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -192,6 +194,18 @@ func (g *serviceGenerator) generate() error {
 					}
 				}
 				return nil
+			},
+			"derefStruct": func(f *gen.Field) string {
+				if f.IsJSON() {
+					annotation, err := annotations.ExtractFieldAnnotation(f)
+					if err != nil || annotation.MarshaledGoType == nil {
+						return ""
+					}
+					if annotation.MarshaledGoType.Kind == reflect.Struct {
+						return "*"
+					}
+				}
+				return ""
 			},
 		}).
 		ParseFS(templates, "template/service/*.tmpl")

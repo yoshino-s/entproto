@@ -18,6 +18,10 @@ const (
 	FieldMetadata = "metadata"
 	// FieldTags holds the string denoting the tags field in the database.
 	FieldTags = "tags"
+	// FieldSomeStruct holds the string denoting the some_struct field in the database.
+	FieldSomeStruct = "some_struct"
+	// FieldMetadataStruct holds the string denoting the metadata_struct field in the database.
+	FieldMetadataStruct = "metadata_struct"
 	// EdgeUsers holds the string denoting the users edge name in mutations.
 	EdgeUsers = "users"
 	// Table holds the table name of the group in the database.
@@ -37,6 +41,8 @@ var Columns = []string{
 	FieldName,
 	FieldMetadata,
 	FieldTags,
+	FieldSomeStruct,
+	FieldMetadataStruct,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

@@ -8,6 +8,7 @@ import (
 	user "github.com/yoshino-s/entproto/internal/test/ent/user"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
 	runtime "github.com/yoshino-s/entproto/runtime"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
@@ -53,7 +54,7 @@ func ToProtoUser(e *ent.User) (*entpb.User, error) {
 	v.Id = id
 	name := e.Name
 	v.Name = name
-	preferences, err := runtime.ToStructPbValue(e.Preferences)
+	preferences, err := ConvertStringAnyMapToProto(e.Preferences)
 	if err != nil {
 		return nil, err
 	}
@@ -93,4 +94,30 @@ func WrapProtoUserList(e []*ent.User, err error) ([]*entpb.User, error) {
 		return ToProtoUserList(e)
 	}
 	return nil, wrapError(err)
+}
+
+// ExtraConverts
+func ConvertProtoToStringAnyMap(in map[string]*structpb.Value) (map[string]any, error) {
+	result := make(map[string]any)
+	for key, value := range in {
+		var valueTmpObj any
+		valueErr := runtime.FromStructPbValue(value, &valueTmpObj)
+		if valueErr != nil {
+			return nil, valueErr
+		}
+		result[key] = valueTmpObj
+	}
+	return result, nil
+}
+
+func ConvertStringAnyMapToProto(in map[string]any) (map[string]*structpb.Value, error) {
+	result := make(map[string]*structpb.Value)
+	for key, value := range in {
+		valueTmpObj, valueErr := runtime.ToStructPbValue(value)
+		if valueErr != nil {
+			return nil, valueErr
+		}
+		result[key] = valueTmpObj
+	}
+	return result, nil
 }

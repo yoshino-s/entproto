@@ -5,7 +5,12 @@ import (
 	connect "connectrpc.com/connect"
 	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
+	schema "github.com/yoshino-s/entproto/internal/test/ent/schema"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
+	runtime "github.com/yoshino-s/entproto/runtime"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // ToProtoGroup transforms the ent type to the pb type
@@ -15,8 +20,18 @@ func ToProtoGroup(e *ent.Group) (*entpb.Group, error) {
 	v.Id = id
 	metadata := e.Metadata
 	v.Metadata = metadata
+	metadata_struct, err := ConvertGroupMetadataToProto(e.MetadataStruct)
+	if err != nil {
+		return nil, err
+	}
+	v.MetadataStruct = metadata_struct
 	name := e.Name
 	v.Name = name
+	some_struct, err := ConvertTestStructToProto(&e.SomeStruct)
+	if err != nil {
+		return nil, err
+	}
+	v.SomeStruct = some_struct
 	tags := e.Tags
 	v.Tags = tags
 	{
@@ -54,4 +69,194 @@ func WrapProtoGroupList(e []*ent.Group, err error) ([]*entpb.Group, error) {
 		return ToProtoGroupList(e)
 	}
 	return nil, wrapError(err)
+}
+
+// ExtraConverts
+func ConvertProtoToNestedStruct(in *entpb.NestedStruct) (*schema.NestedStruct, error) {
+	v := &schema.NestedStruct{}
+	v.A = in.A
+	return v, nil
+}
+
+func ConvertProtoToTestStruct(in *entpb.TestStruct) (*schema.TestStruct, error) {
+	v := &schema.TestStruct{}
+	v.StringField = in.StringField
+	v.IntField = in.IntField
+	v.BoolField = in.BoolField
+	v.BytesField = in.BytesField
+	if in.TimeField != nil {
+		v.TimeField = in.TimeField.AsTime()
+	}
+	if in.DurationField != nil {
+		v.DurationField = in.DurationField.AsDuration()
+	}
+	if in.PtrBoolField != nil {
+		vv := in.PtrBoolField.Value
+		v.PtrBoolField = &vv
+	} else {
+		v.PtrBoolField = nil
+	}
+
+	if in.PtrIntField != nil {
+		vv := in.PtrIntField.Value
+		v.PtrIntField = &vv
+	} else {
+		v.PtrIntField = nil
+	}
+
+	if in.PtrStringField != nil {
+		vv := in.PtrStringField.Value
+		v.PtrStringField = &vv
+	} else {
+		v.PtrStringField = nil
+	}
+
+	if in.PtrFloatField != nil {
+		vv := in.PtrFloatField.Value
+		v.PtrFloatField = &vv
+	} else {
+		v.PtrFloatField = nil
+	}
+
+	if in.PtrDoubleField != nil {
+		vv := in.PtrDoubleField.Value
+		v.PtrDoubleField = &vv
+	} else {
+		v.PtrDoubleField = nil
+	}
+
+	if in.PtrTimeField != nil {
+		vv := in.PtrTimeField.AsTime()
+		v.PtrTimeField = &vv
+	} else {
+		v.PtrTimeField = nil
+	}
+
+	if in.PtrDurationField != nil {
+		vv := in.PtrDurationField.AsDuration()
+		v.PtrDurationField = &vv
+	} else {
+		v.PtrDurationField = nil
+	}
+
+	v.ListField = in.ListField
+	v.MapField = in.MapField
+	NestedFieldTmpObj, NestedFieldErr := ConvertProtoToNestedStruct(in.NestedField)
+	if NestedFieldErr != nil {
+		return nil, NestedFieldErr
+	}
+	v.NestedField = NestedFieldTmpObj
+	for _, item := range in.ListNestedField {
+		itemTmpObj, itemErr := ConvertProtoToNestedStruct(item)
+		if itemErr != nil {
+			return nil, itemErr
+		}
+		ListNestedFieldTmpObj := *itemTmpObj
+		v.ListNestedField = append(v.ListNestedField, ListNestedFieldTmpObj)
+	}
+	for key, value := range in.MapNestedField {
+		valueTmpObj, valueErr := ConvertProtoToNestedStruct(value)
+		if valueErr != nil {
+			return nil, valueErr
+		}
+		v.MapNestedField[key] = *valueTmpObj
+	}
+	var AnyFieldTmpObj any
+	AnyFieldErr := runtime.FromStructPbValue(in.AnyField, &AnyFieldTmpObj)
+	if AnyFieldErr != nil {
+		return nil, AnyFieldErr
+	}
+	v.AnyField = AnyFieldTmpObj
+	return v, nil
+}
+
+func ConvertGroupMetadataToProto(in *schema.GroupMetadata) (*entpb.GroupMetadata, error) {
+	v := &entpb.GroupMetadata{}
+	v.Version = in.Version
+	return v, nil
+}
+
+func ConvertProtoToGroupMetadata(in *entpb.GroupMetadata) (*schema.GroupMetadata, error) {
+	v := &schema.GroupMetadata{}
+	v.Version = in.Version
+	return v, nil
+}
+
+func ConvertNestedStructToProto(in *schema.NestedStruct) (*entpb.NestedStruct, error) {
+	v := &entpb.NestedStruct{}
+	v.A = in.A
+	return v, nil
+}
+
+func ConvertTestStructToProto(in *schema.TestStruct) (*entpb.TestStruct, error) {
+	v := &entpb.TestStruct{}
+	v.StringField = in.StringField
+	v.IntField = in.IntField
+	v.BoolField = in.BoolField
+	v.BytesField = in.BytesField
+	v.TimeField = timestamppb.New(in.TimeField)
+	v.DurationField = durationpb.New(in.DurationField)
+	if in.PtrBoolField != nil {
+		v.PtrBoolField = wrapperspb.Bool(*in.PtrBoolField)
+	} else {
+		v.PtrBoolField = nil
+	}
+	if in.PtrIntField != nil {
+		v.PtrIntField = wrapperspb.Int32(*in.PtrIntField)
+	} else {
+		v.PtrIntField = nil
+	}
+	if in.PtrStringField != nil {
+		v.PtrStringField = wrapperspb.String(*in.PtrStringField)
+	} else {
+		v.PtrStringField = nil
+	}
+	if in.PtrFloatField != nil {
+		v.PtrFloatField = wrapperspb.Float(*in.PtrFloatField)
+	} else {
+		v.PtrFloatField = nil
+	}
+	if in.PtrDoubleField != nil {
+		v.PtrDoubleField = wrapperspb.Double(*in.PtrDoubleField)
+	} else {
+		v.PtrDoubleField = nil
+	}
+	if in.PtrTimeField != nil {
+		v.PtrTimeField = timestamppb.New(*in.PtrTimeField)
+	} else {
+		v.PtrTimeField = nil
+	}
+	if in.PtrDurationField != nil {
+		v.PtrDurationField = durationpb.New(*in.PtrDurationField)
+	} else {
+		v.PtrDurationField = nil
+	}
+	v.ListField = in.ListField
+	v.MapField = in.MapField
+	NestedFieldTmpObj, NestedFieldErr := ConvertNestedStructToProto(in.NestedField)
+	if NestedFieldErr != nil {
+		return nil, NestedFieldErr
+	}
+	v.NestedField = NestedFieldTmpObj
+	for _, item := range in.ListNestedField {
+		itemTmpObj, itemErr := ConvertNestedStructToProto(&item)
+		if itemErr != nil {
+			return nil, itemErr
+		}
+		ListNestedFieldTmpObj := itemTmpObj
+		v.ListNestedField = append(v.ListNestedField, ListNestedFieldTmpObj)
+	}
+	for key, value := range in.MapNestedField {
+		valueTmpObj, valueErr := ConvertNestedStructToProto(&value)
+		if valueErr != nil {
+			return nil, valueErr
+		}
+		v.MapNestedField[key] = valueTmpObj
+	}
+	AnyFieldTmpObj, AnyFieldErr := runtime.ToStructPbValue(in.AnyField)
+	if AnyFieldErr != nil {
+		return nil, AnyFieldErr
+	}
+	v.AnyField = AnyFieldTmpObj
+	return v, nil
 }

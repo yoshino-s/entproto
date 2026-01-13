@@ -55,7 +55,7 @@
                 if {{ $id }} != nil {
             {{- end }}
             {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id }}
-            m.Set{{ .EntField.StructField }}({{ $varName }})
+            m.Set{{ .EntField.StructField }}({{derefStruct .EntField}}{{ $varName }})
             {{- if (or .EntField.Optional (and .EntField.Default (eq .EntField.Type.Type 2) ) ) }}
                 }
             {{- end }}
@@ -93,7 +93,7 @@
             {{- $id := print $reqVar ".Get" .PbStructField "() " }}
             if {{ $id }} != nil {
                 {{- template "field_to_ent" dict "Field" . "VarName" $varName "Ident" $id "PbFieldDescriptor" (getPbField $ .) }}
-                m.Set{{ .EntField.StructField }}({{ $varName }})
+                m.Set{{ .EntField.StructField }}({{derefStruct .EntField}}{{ $varName }})
             }
         {{- end }}
     {{- end }}

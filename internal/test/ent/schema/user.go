@@ -66,7 +66,7 @@ func (User) Fields() []ent.Field {
 		field.JSON("preferences", map[string]any{}).
 			Optional().
 			Annotations(
-				entproto.Field(8),
+				entproto.Field(8, entproto.MarshaledGoType(map[string]any{})),
 			),
 	}
 }

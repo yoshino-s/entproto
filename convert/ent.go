@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto/annotations"
+	"github.com/yoshino-s/entproto/convert/struct_converter"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -171,11 +172,26 @@ func (c *Converter) toProtoFieldDescriptor(f *gen.Field, msg *descriptorpb.Descr
 
 func (c *Converter) ExtractProtoTypeDetails(f *gen.Field, msg *descriptorpb.DescriptorProto, optional ...bool) (FieldType, error) {
 	if f.Type.Type == field.TypeJSON {
-		r, err := c.identToFieldType(msg, f.Name, f.Type.Ident)
+		annotation, err := annotations.ExtractFieldAnnotation(f)
 		if err != nil {
 			return FieldType{}, err
 		}
-		return r, nil
+		if annotation.MarshaledGoType != nil {
+			cvt := struct_converter.NewStructConverter(c)
+			f, err := cvt.Convert(annotation.MarshaledGoType, f.Name, msg)
+			if err != nil {
+				return FieldType{}, err
+			}
+			return FieldType{
+				ProtoType:   f.GetType(),
+				MessageName: f.GetTypeName(),
+				Repeated:    f.GetLabel().Number() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Number(),
+			}, nil
+		}
+		return FieldType{
+			ProtoType:   descriptorpb.FieldDescriptorProto_TYPE_MESSAGE,
+			MessageName: "google.protobuf.Value",
+		}, nil
 	}
 
 	cfg, ok := TypeMap[f.Type.Type]

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -37,6 +38,18 @@ func (gc *GroupCreate) SetMetadata(m map[string]string) *GroupCreate {
 // SetTags sets the "tags" field.
 func (gc *GroupCreate) SetTags(s []string) *GroupCreate {
 	gc.mutation.SetTags(s)
+	return gc
+}
+
+// SetSomeStruct sets the "some_struct" field.
+func (gc *GroupCreate) SetSomeStruct(ss schema.TestStruct) *GroupCreate {
+	gc.mutation.SetSomeStruct(ss)
+	return gc
+}
+
+// SetMetadataStruct sets the "metadata_struct" field.
+func (gc *GroupCreate) SetMetadataStruct(sm *schema.GroupMetadata) *GroupCreate {
+	gc.mutation.SetMetadataStruct(sm)
 	return gc
 }
 
@@ -98,6 +111,12 @@ func (gc *GroupCreate) check() error {
 	if _, ok := gc.mutation.Tags(); !ok {
 		return &ValidationError{Name: "tags", err: errors.New(`ent: missing required field "Group.tags"`)}
 	}
+	if _, ok := gc.mutation.SomeStruct(); !ok {
+		return &ValidationError{Name: "some_struct", err: errors.New(`ent: missing required field "Group.some_struct"`)}
+	}
+	if _, ok := gc.mutation.MetadataStruct(); !ok {
+		return &ValidationError{Name: "metadata_struct", err: errors.New(`ent: missing required field "Group.metadata_struct"`)}
+	}
 	return nil
 }
 
@@ -136,6 +155,14 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.Tags(); ok {
 		_spec.SetField(group.FieldTags, field.TypeJSON, value)
 		_node.Tags = value
+	}
+	if value, ok := gc.mutation.SomeStruct(); ok {
+		_spec.SetField(group.FieldSomeStruct, field.TypeJSON, value)
+		_node.SomeStruct = value
+	}
+	if value, ok := gc.mutation.MetadataStruct(); ok {
+		_spec.SetField(group.FieldMetadataStruct, field.TypeJSON, value)
+		_node.MetadataStruct = value
 	}
 	if nodes := gc.mutation.UsersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -241,6 +268,30 @@ func (u *GroupUpsert) UpdateTags() *GroupUpsert {
 	return u
 }
 
+// SetSomeStruct sets the "some_struct" field.
+func (u *GroupUpsert) SetSomeStruct(v schema.TestStruct) *GroupUpsert {
+	u.Set(group.FieldSomeStruct, v)
+	return u
+}
+
+// UpdateSomeStruct sets the "some_struct" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateSomeStruct() *GroupUpsert {
+	u.SetExcluded(group.FieldSomeStruct)
+	return u
+}
+
+// SetMetadataStruct sets the "metadata_struct" field.
+func (u *GroupUpsert) SetMetadataStruct(v *schema.GroupMetadata) *GroupUpsert {
+	u.Set(group.FieldMetadataStruct, v)
+	return u
+}
+
+// UpdateMetadataStruct sets the "metadata_struct" field to the value that was provided on create.
+func (u *GroupUpsert) UpdateMetadataStruct() *GroupUpsert {
+	u.SetExcluded(group.FieldMetadataStruct)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create.
 // Using this option is equivalent to using:
 //
@@ -320,6 +371,34 @@ func (u *GroupUpsertOne) SetTags(v []string) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateTags() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateTags()
+	})
+}
+
+// SetSomeStruct sets the "some_struct" field.
+func (u *GroupUpsertOne) SetSomeStruct(v schema.TestStruct) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSomeStruct(v)
+	})
+}
+
+// UpdateSomeStruct sets the "some_struct" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateSomeStruct() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSomeStruct()
+	})
+}
+
+// SetMetadataStruct sets the "metadata_struct" field.
+func (u *GroupUpsertOne) SetMetadataStruct(v *schema.GroupMetadata) *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetMetadataStruct(v)
+	})
+}
+
+// UpdateMetadataStruct sets the "metadata_struct" field to the value that was provided on create.
+func (u *GroupUpsertOne) UpdateMetadataStruct() *GroupUpsertOne {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateMetadataStruct()
 	})
 }
 
@@ -565,6 +644,34 @@ func (u *GroupUpsertBulk) SetTags(v []string) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateTags() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateTags()
+	})
+}
+
+// SetSomeStruct sets the "some_struct" field.
+func (u *GroupUpsertBulk) SetSomeStruct(v schema.TestStruct) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetSomeStruct(v)
+	})
+}
+
+// UpdateSomeStruct sets the "some_struct" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateSomeStruct() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateSomeStruct()
+	})
+}
+
+// SetMetadataStruct sets the "metadata_struct" field.
+func (u *GroupUpsertBulk) SetMetadataStruct(v *schema.GroupMetadata) *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.SetMetadataStruct(v)
+	})
+}
+
+// UpdateMetadataStruct sets the "metadata_struct" field to the value that was provided on create.
+func (u *GroupUpsertBulk) UpdateMetadataStruct() *GroupUpsertBulk {
+	return u.Update(func(s *GroupUpsert) {
+		s.UpdateMetadataStruct()
 	})
 }
 

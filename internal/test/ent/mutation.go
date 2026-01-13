@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
 	"github.com/yoshino-s/entproto/internal/test/ent/predicate"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -32,20 +33,22 @@ const (
 // GroupMutation represents an operation that mutates the Group nodes in the graph.
 type GroupMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	name          *string
-	metadata      *map[string]string
-	tags          *[]string
-	appendtags    []string
-	clearedFields map[string]struct{}
-	users         map[int]struct{}
-	removedusers  map[int]struct{}
-	clearedusers  bool
-	done          bool
-	oldValue      func(context.Context) (*Group, error)
-	predicates    []predicate.Group
+	op              Op
+	typ             string
+	id              *int
+	name            *string
+	metadata        *map[string]string
+	tags            *[]string
+	appendtags      []string
+	some_struct     *schema.TestStruct
+	metadata_struct **schema.GroupMetadata
+	clearedFields   map[string]struct{}
+	users           map[int]struct{}
+	removedusers    map[int]struct{}
+	clearedusers    bool
+	done            bool
+	oldValue        func(context.Context) (*Group, error)
+	predicates      []predicate.Group
 }
 
 var _ ent.Mutation = (*GroupMutation)(nil)
@@ -269,6 +272,78 @@ func (m *GroupMutation) ResetTags() {
 	m.appendtags = nil
 }
 
+// SetSomeStruct sets the "some_struct" field.
+func (m *GroupMutation) SetSomeStruct(ss schema.TestStruct) {
+	m.some_struct = &ss
+}
+
+// SomeStruct returns the value of the "some_struct" field in the mutation.
+func (m *GroupMutation) SomeStruct() (r schema.TestStruct, exists bool) {
+	v := m.some_struct
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSomeStruct returns the old "some_struct" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldSomeStruct(ctx context.Context) (v schema.TestStruct, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSomeStruct is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSomeStruct requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSomeStruct: %w", err)
+	}
+	return oldValue.SomeStruct, nil
+}
+
+// ResetSomeStruct resets all changes to the "some_struct" field.
+func (m *GroupMutation) ResetSomeStruct() {
+	m.some_struct = nil
+}
+
+// SetMetadataStruct sets the "metadata_struct" field.
+func (m *GroupMutation) SetMetadataStruct(sm *schema.GroupMetadata) {
+	m.metadata_struct = &sm
+}
+
+// MetadataStruct returns the value of the "metadata_struct" field in the mutation.
+func (m *GroupMutation) MetadataStruct() (r *schema.GroupMetadata, exists bool) {
+	v := m.metadata_struct
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadataStruct returns the old "metadata_struct" field's value of the Group entity.
+// If the Group object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GroupMutation) OldMetadataStruct(ctx context.Context) (v *schema.GroupMetadata, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadataStruct is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadataStruct requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadataStruct: %w", err)
+	}
+	return oldValue.MetadataStruct, nil
+}
+
+// ResetMetadataStruct resets all changes to the "metadata_struct" field.
+func (m *GroupMutation) ResetMetadataStruct() {
+	m.metadata_struct = nil
+}
+
 // AddUserIDs adds the "users" edge to the User entity by ids.
 func (m *GroupMutation) AddUserIDs(ids ...int) {
 	if m.users == nil {
@@ -357,7 +432,7 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 5)
 	if m.name != nil {
 		fields = append(fields, group.FieldName)
 	}
@@ -366,6 +441,12 @@ func (m *GroupMutation) Fields() []string {
 	}
 	if m.tags != nil {
 		fields = append(fields, group.FieldTags)
+	}
+	if m.some_struct != nil {
+		fields = append(fields, group.FieldSomeStruct)
+	}
+	if m.metadata_struct != nil {
+		fields = append(fields, group.FieldMetadataStruct)
 	}
 	return fields
 }
@@ -381,6 +462,10 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.Metadata()
 	case group.FieldTags:
 		return m.Tags()
+	case group.FieldSomeStruct:
+		return m.SomeStruct()
+	case group.FieldMetadataStruct:
+		return m.MetadataStruct()
 	}
 	return nil, false
 }
@@ -396,6 +481,10 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldMetadata(ctx)
 	case group.FieldTags:
 		return m.OldTags(ctx)
+	case group.FieldSomeStruct:
+		return m.OldSomeStruct(ctx)
+	case group.FieldMetadataStruct:
+		return m.OldMetadataStruct(ctx)
 	}
 	return nil, fmt.Errorf("unknown Group field %s", name)
 }
@@ -425,6 +514,20 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTags(v)
+		return nil
+	case group.FieldSomeStruct:
+		v, ok := value.(schema.TestStruct)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSomeStruct(v)
+		return nil
+	case group.FieldMetadataStruct:
+		v, ok := value.(*schema.GroupMetadata)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadataStruct(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)
@@ -483,6 +586,12 @@ func (m *GroupMutation) ResetField(name string) error {
 		return nil
 	case group.FieldTags:
 		m.ResetTags()
+		return nil
+	case group.FieldSomeStruct:
+		m.ResetSomeStruct()
+		return nil
+	case group.FieldMetadataStruct:
+		m.ResetMetadataStruct()
 		return nil
 	}
 	return fmt.Errorf("unknown Group field %s", name)

@@ -5,6 +5,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	gen "entgo.io/ent/entc/gen"
+	errors "github.com/go-errors/errors"
 	ent "github.com/yoshino-s/entproto/internal/test/ent"
 	group "github.com/yoshino-s/entproto/internal/test/ent/group"
 	entpb "github.com/yoshino-s/entproto/internal/test/proto/entpb"
@@ -84,9 +85,23 @@ func (svc *GroupServiceHandler) Update(ctx context.Context, req *connect.Request
 		groupMetadata := group.GetMetadata()
 		m.SetMetadata(groupMetadata)
 	}
+	if group.GetMetadataStruct() != nil {
+		groupMetadataStruct, err := ConvertProtoToGroupMetadata(group.GetMetadataStruct())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
+		}
+		m.SetMetadataStruct(groupMetadataStruct)
+	}
 	if group.GetName() != nil {
 		groupName := group.GetName().GetValue()
 		m.SetName(groupName)
+	}
+	if group.GetSomeStruct() != nil {
+		groupSomeStruct, err := ConvertProtoToTestStruct(group.GetSomeStruct())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
+		}
+		m.SetSomeStruct(*groupSomeStruct)
 	}
 	if group.GetTags() != nil {
 		groupTags := group.GetTags()
@@ -207,8 +222,18 @@ func (svc *GroupServiceHandler) createBuilder(group *entpb.Group) (*ent.GroupCre
 	m := svc.Client.Group.Create()
 	groupMetadata := group.GetMetadata()
 	m.SetMetadata(groupMetadata)
+	groupMetadataStruct, err := ConvertProtoToGroupMetadata(group.GetMetadataStruct())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
+	}
+	m.SetMetadataStruct(groupMetadataStruct)
 	groupName := group.GetName()
 	m.SetName(groupName)
+	groupSomeStruct, err := ConvertProtoToTestStruct(group.GetSomeStruct())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
+	}
+	m.SetSomeStruct(*groupSomeStruct)
 	groupTags := group.GetTags()
 	m.SetTags(groupTags)
 	for _, item := range group.GetUsers() {

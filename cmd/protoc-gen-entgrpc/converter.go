@@ -23,6 +23,7 @@ import (
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto"
+	"github.com/yoshino-s/entproto/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -42,6 +43,7 @@ type converter struct {
 	ToEntConversion              string
 	ToEntScannerConversion       string
 	ToEntConstructor             protogen.GoIdent
+	ToEntConversionWithError     protogen.GoIdent
 	ToEntMarshallerConstructor   protogen.GoIdent
 	ToEntScannerConstructor      protogen.GoIdent
 	ToEntUnmarshal               protogen.GoIdent
@@ -51,6 +53,8 @@ type converter struct {
 	ToProtoConstructorWithError  protogen.GoIdent
 	toProtoMarshallerConstructor protogen.GoIdent
 	ToProtoValuer                string
+
+	extraConverters map[string]string
 }
 
 func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...any) (*converter, error) {
@@ -141,11 +145,11 @@ func (g *generator) newConverter(fld *entproto.FieldMappingDescriptor, pbds ...a
 			out.ToEntConstructor = g.GoImportPath.Ident(method)
 		}
 	case efld.IsJSON():
-		msg := pbd.Message()
-		if msg != nil && msg.IsMapEntry() || pbd.IsList() {
-			//
-		} else {
+		annotation, err := annotations.ExtractFieldAnnotation(efld)
+		if err != nil || annotation.MarshaledGoType == nil {
 			out.ToEntUnmarshal = protogen.GoImportPath(runtimePackage).Ident("FromStructPbValue")
+		} else {
+			getExtraConverterName(annotation.MarshaledGoType, out)
 		}
 	default:
 		return nil, fmt.Errorf("entproto(newConverter): no mapping to ent field type %q", efld.Type.ConstName())
@@ -209,8 +213,6 @@ func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field
 		conv.ToProtoConstructor = protogen.GoImportPath("google.golang.org/protobuf/types/known/timestamppb").Ident("New")
 	case md.FullName() == "google.protobuf.Value":
 		conv.ToProtoConstructorWithError = protogen.GoImportPath(runtimePackage).Ident("ToStructPbValue")
-	case strings.HasSuffix(string(md.FullName()), "Entry"):
-		//
 	case isWrapperType(md):
 		fqn := md.FullName()
 		typ := strings.Split(string(fqn), ".")[2]
@@ -224,6 +226,13 @@ func convertPbMessageType(md protoreflect.MessageDescriptor, entField *gen.Field
 			conv.ToProtoConversion = goType
 		}
 		conv.ToEntModifier = ".GetValue()"
+	case entField.IsJSON():
+		annotation, err := annotations.ExtractFieldAnnotation(entField)
+		if err != nil || annotation.MarshaledGoType == nil {
+			conv.ToProtoConstructorWithError = protogen.GoImportPath(runtimePackage).Ident("ToStructPbValue")
+		} else {
+			getExtraConverterName(annotation.MarshaledGoType, conv)
+		}
 	default:
 		return fmt.Errorf("entproto(convertPbMessageType): no mapping for pb field type %q", md.FullName())
 	}

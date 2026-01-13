@@ -36,6 +36,7 @@ var (
 	Field           = annotations.Field
 	Type            = annotations.Type
 	TypeName        = annotations.TypeName
+	MarshaledGoType = annotations.MarshaledGoType
 
 	SkipAnnotation = annotations.SkipAnnotation
 	Skip           = annotations.Skip

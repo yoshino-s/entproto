@@ -2,10 +2,12 @@ package annotations
 
 import (
 	"fmt"
+	"reflect"
 
 	"entgo.io/ent/entc/gen"
 	"entgo.io/ent/schema"
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/yoshino-s/entproto/convert/struct_converter"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -25,6 +27,8 @@ type pbfield struct {
 	Number   int
 	Type     descriptorpb.FieldDescriptorProto_Type
 	TypeName string
+
+	MarshaledGoType *struct_converter.MarshaledGoType
 }
 
 func (f pbfield) Name() string {
@@ -50,6 +54,16 @@ func Type(typ descriptorpb.FieldDescriptorProto_Type) FieldOption {
 func TypeName(n string) FieldOption {
 	return func(p *pbfield) {
 		p.TypeName = n
+	}
+}
+
+func MarshaledGoType(v any) FieldOption {
+	return func(p *pbfield) {
+		t, err := struct_converter.MarshalGoType(reflect.TypeOf(v))
+		if err != nil {
+			panic(fmt.Sprintf("entproto: failed to marshal go type for MarshaledGoType annotation: %v", err))
+		}
+		p.MarshaledGoType = t
 	}
 }
 

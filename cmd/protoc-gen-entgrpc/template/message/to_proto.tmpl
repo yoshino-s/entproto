@@ -106,7 +106,7 @@
     {{- else if $conv.ToProtoConstructor.GoName }}
         {{ .VarName }} := {{ ident $conv.ToProtoConstructor }}({{ $id }})
     {{- else if $conv.ToProtoConstructorWithError.GoName }}
-        {{ .VarName }}, err := {{ ident $conv.ToProtoConstructorWithError }}({{ $id }})
+        {{ .VarName }}, err := {{ ident $conv.ToProtoConstructorWithError }}({{refStruct .Field.EntField }}{{ $id }})
         if err != nil {
             return nil, err
         }

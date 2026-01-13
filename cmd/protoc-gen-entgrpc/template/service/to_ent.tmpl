@@ -17,6 +17,11 @@
         }
     {{- else if $conv.ToEntConstructor.GoName }}
         {{ .VarName }} := {{ ident $conv.ToEntConstructor }}({{ $id }})
+    {{- else if $conv.ToEntConversionWithError.GoName }}
+        {{ .VarName }}, err := {{ ident $conv.ToEntConversionWithError }}({{ $id }})
+        if err != nil {
+            return nil, {{ statusErrf "CodeInvalidArgument" "invalid argument: %s" "err" }}
+        }
     {{- else if $conv.ToEntConversion }}
         {{ .VarName }} := {{ $conv.ToEntConversion }}({{ $id }})
     {{- else if $conv.ToEntUnmarshal.GoName }}

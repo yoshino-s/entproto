@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 )
 
 // Group is the model entity for the Group schema.
@@ -23,6 +24,10 @@ type Group struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 	// Tags holds the value of the "tags" field.
 	Tags []string `json:"tags,omitempty"`
+	// SomeStruct holds the value of the "some_struct" field.
+	SomeStruct schema.TestStruct `json:"some_struct,omitempty"`
+	// MetadataStruct holds the value of the "metadata_struct" field.
+	MetadataStruct *schema.GroupMetadata `json:"metadata_struct,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GroupQuery when eager-loading is set.
 	Edges        GroupEdges `json:"edges"`
@@ -52,7 +57,7 @@ func (*Group) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case group.FieldMetadata, group.FieldTags:
+		case group.FieldMetadata, group.FieldTags, group.FieldSomeStruct, group.FieldMetadataStruct:
 			values[i] = new([]byte)
 		case group.FieldID:
 			values[i] = new(sql.NullInt64)
@@ -99,6 +104,22 @@ func (gr *Group) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &gr.Tags); err != nil {
 					return fmt.Errorf("unmarshal field tags: %w", err)
+				}
+			}
+		case group.FieldSomeStruct:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field some_struct", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gr.SomeStruct); err != nil {
+					return fmt.Errorf("unmarshal field some_struct: %w", err)
+				}
+			}
+		case group.FieldMetadataStruct:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field metadata_struct", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gr.MetadataStruct); err != nil {
+					return fmt.Errorf("unmarshal field metadata_struct: %w", err)
 				}
 			}
 		default:
@@ -150,6 +171,12 @@ func (gr *Group) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("tags=")
 	builder.WriteString(fmt.Sprintf("%v", gr.Tags))
+	builder.WriteString(", ")
+	builder.WriteString("some_struct=")
+	builder.WriteString(fmt.Sprintf("%v", gr.SomeStruct))
+	builder.WriteString(", ")
+	builder.WriteString("metadata_struct=")
+	builder.WriteString(fmt.Sprintf("%v", gr.MetadataStruct))
 	builder.WriteByte(')')
 	return builder.String()
 }

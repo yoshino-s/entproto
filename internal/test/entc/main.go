@@ -9,6 +9,8 @@ import (
 	"entgo.io/ent/entc"
 	"entgo.io/ent/entc/gen"
 	"github.com/yoshino-s/entproto"
+
+	_ "github.com/yoshino-s/entproto/internal/test/ent/schema"
 )
 
 func main() {

@@ -1,9 +1,13 @@
 package runtime
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
+	"github.com/yoshino-s/entproto/internal/test/proto/entpb"
 )
 
 type TestStruct struct {
@@ -47,4 +51,41 @@ func TestStruct2Proto(t *testing.T) {
 		So(newV.ListNestedField[0].A, ShouldEqual, "b")
 		So(newV.unexportedField, ShouldEqual, "")
 	})
+}
+
+func TestStructToMessage(t *testing.T) {
+	structValue := &schema.TestStruct{
+		StringField: "test",
+		IntField:    1,
+		BoolField:   true,
+		ListField:   []string{"item1", "item2"},
+		MapField:    map[string]int32{"key1": 1, "key2": 2},
+		NestedField: &schema.NestedStruct{
+			A: "test",
+		},
+		ListNestedField: []schema.NestedStruct{
+			{A: "test"},
+			{A: "test2"},
+		},
+		MapNestedField: map[string]schema.NestedStruct{
+			"key1": {A: "test"},
+			"key2": {A: "test2"},
+		},
+		AnyField: "test",
+	}
+
+	protoStruct := &entpb.TestStruct{}
+
+	err := ToProtoMessage(structValue, &protoStruct)
+	assert.NoError(t, err)
+
+	fmt.Printf("%+v\n", protoStruct)
+
+	// newStruct := &schema.TestStruct{}
+	// err = FromProtoMessage(protoStruct, newStruct)
+	// assert.NoError(t, err)
+
+	// fmt.Println(newStruct)
+
+	// assert.Equal(t, structValue, newStruct)
 }

@@ -14,6 +14,8 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "metadata", Type: field.TypeJSON},
 		{Name: "tags", Type: field.TypeJSON},
+		{Name: "some_struct", Type: field.TypeJSON},
+		{Name: "metadata_struct", Type: field.TypeJSON},
 	}
 	// GroupsTable holds the schema information for the "groups" table.
 	GroupsTable = &schema.Table{

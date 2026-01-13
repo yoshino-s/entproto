@@ -99,9 +99,8 @@ func (svc *UserServiceHandler) Update(ctx context.Context, req *connect.Request[
 		m.SetName(userName)
 	}
 	if user.GetPreferences() != nil {
-		var userPreferencesTmpObj ent.User
-		userPreferences := userPreferencesTmpObj.Preferences
-		if err := runtime.FromStructPbValue(user.GetPreferences(), &userPreferences); err != nil {
+		userPreferences, err := ConvertProtoToStringAnyMap(user.GetPreferences())
+		if err != nil {
 			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
 		}
 		m.SetPreferences(userPreferences)
@@ -286,9 +285,8 @@ func (svc *UserServiceHandler) createBuilder(user *entpb.User) (*ent.UserCreate,
 	userName := user.GetName()
 	m.SetName(userName)
 	if user.GetPreferences() != nil {
-		var userPreferencesTmpObj ent.User
-		userPreferences := userPreferencesTmpObj.Preferences
-		if err := runtime.FromStructPbValue(user.GetPreferences(), &userPreferences); err != nil {
+		userPreferences, err := ConvertProtoToStringAnyMap(user.GetPreferences())
+		if err != nil {
 			return nil, connect.NewError(connect.CodeInvalidArgument, errors.Errorf("invalid argument: %s", err))
 		}
 		m.SetPreferences(userPreferences)

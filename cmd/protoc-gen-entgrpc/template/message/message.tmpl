@@ -8,4 +8,8 @@ package {{ .File.GoPackageName }}
 {{ template "to_proto_func" . }}
 
 {{ template "to_proto_list_func" . }}
+
+// ExtraConverts
+{{ .ExtraConverters }}
+
 {{ end }}

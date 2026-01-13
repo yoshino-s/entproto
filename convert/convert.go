@@ -2,9 +2,9 @@ package convert
 
 import (
 	"fmt"
-	"reflect"
 
 	"entgo.io/ent/entc/gen"
+	"github.com/yoshino-s/entproto/convert/struct_converter"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -12,14 +12,14 @@ type Converter struct {
 	*descriptorpb.FileDescriptorProto
 	usedNames map[string]struct{}
 
-	messageMap map[reflect.Type]*descriptorpb.DescriptorProto
+	messageMap map[string]*descriptorpb.DescriptorProto
 }
 
 func New(fdp *descriptorpb.FileDescriptorProto) *Converter {
 	c := &Converter{
 		FileDescriptorProto: fdp,
 		usedNames:           make(map[string]struct{}),
-		messageMap:          make(map[reflect.Type]*descriptorpb.DescriptorProto),
+		messageMap:          make(map[string]*descriptorpb.DescriptorProto),
 	}
 
 	c.FileDescriptorProto.Dependency = append(c.FileDescriptorProto.Dependency, "google/protobuf/wrappers.proto")
@@ -46,19 +46,20 @@ func (c *Converter) resolveMessageName(name string) string {
 	}
 }
 
-func (c *Converter) getMessage(t reflect.Type) (*descriptorpb.DescriptorProto, bool) {
-	if msg, ok := c.messageMap[t]; ok {
-		return msg, true
-	}
-	return nil, false
+func (c *Converter) GetMessageMap() map[string]*descriptorpb.DescriptorProto {
+	return c.messageMap
 }
 
-func (c *Converter) addMessage(msg *descriptorpb.DescriptorProto, t reflect.Type) *descriptorpb.DescriptorProto {
+func (c *Converter) AddMessage(typ *struct_converter.MarshaledGoType, msg *descriptorpb.DescriptorProto) (bool, error) {
+	if _, exists := c.messageMap[typ.GoTypeString()]; exists {
+		return false, nil
+	}
 	msg.Name = ptr(c.resolveMessageName(msg.GetName()))
 
-	c.messageMap[t] = msg
+	c.messageMap[typ.GoTypeString()] = msg
 	c.FileDescriptorProto.MessageType = append(c.FileDescriptorProto.MessageType, msg)
-	return msg
+
+	return true, nil
 }
 
 var (

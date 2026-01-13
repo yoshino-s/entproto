@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/yoshino-s/entproto/internal/test/ent/group"
 	"github.com/yoshino-s/entproto/internal/test/ent/predicate"
+	"github.com/yoshino-s/entproto/internal/test/ent/schema"
 	"github.com/yoshino-s/entproto/internal/test/ent/user"
 )
 
@@ -59,6 +60,26 @@ func (gu *GroupUpdate) SetTags(s []string) *GroupUpdate {
 // AppendTags appends s to the "tags" field.
 func (gu *GroupUpdate) AppendTags(s []string) *GroupUpdate {
 	gu.mutation.AppendTags(s)
+	return gu
+}
+
+// SetSomeStruct sets the "some_struct" field.
+func (gu *GroupUpdate) SetSomeStruct(ss schema.TestStruct) *GroupUpdate {
+	gu.mutation.SetSomeStruct(ss)
+	return gu
+}
+
+// SetNillableSomeStruct sets the "some_struct" field if the given value is not nil.
+func (gu *GroupUpdate) SetNillableSomeStruct(ss *schema.TestStruct) *GroupUpdate {
+	if ss != nil {
+		gu.SetSomeStruct(*ss)
+	}
+	return gu
+}
+
+// SetMetadataStruct sets the "metadata_struct" field.
+func (gu *GroupUpdate) SetMetadataStruct(sm *schema.GroupMetadata) *GroupUpdate {
+	gu.mutation.SetMetadataStruct(sm)
 	return gu
 }
 
@@ -159,6 +180,12 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			sqljson.Append(u, group.FieldTags, value)
 		})
 	}
+	if value, ok := gu.mutation.SomeStruct(); ok {
+		_spec.SetField(group.FieldSomeStruct, field.TypeJSON, value)
+	}
+	if value, ok := gu.mutation.MetadataStruct(); ok {
+		_spec.SetField(group.FieldMetadataStruct, field.TypeJSON, value)
+	}
 	if gu.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -255,6 +282,26 @@ func (guo *GroupUpdateOne) SetTags(s []string) *GroupUpdateOne {
 // AppendTags appends s to the "tags" field.
 func (guo *GroupUpdateOne) AppendTags(s []string) *GroupUpdateOne {
 	guo.mutation.AppendTags(s)
+	return guo
+}
+
+// SetSomeStruct sets the "some_struct" field.
+func (guo *GroupUpdateOne) SetSomeStruct(ss schema.TestStruct) *GroupUpdateOne {
+	guo.mutation.SetSomeStruct(ss)
+	return guo
+}
+
+// SetNillableSomeStruct sets the "some_struct" field if the given value is not nil.
+func (guo *GroupUpdateOne) SetNillableSomeStruct(ss *schema.TestStruct) *GroupUpdateOne {
+	if ss != nil {
+		guo.SetSomeStruct(*ss)
+	}
+	return guo
+}
+
+// SetMetadataStruct sets the "metadata_struct" field.
+func (guo *GroupUpdateOne) SetMetadataStruct(sm *schema.GroupMetadata) *GroupUpdateOne {
+	guo.mutation.SetMetadataStruct(sm)
 	return guo
 }
 
@@ -384,6 +431,12 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, group.FieldTags, value)
 		})
+	}
+	if value, ok := guo.mutation.SomeStruct(); ok {
+		_spec.SetField(group.FieldSomeStruct, field.TypeJSON, value)
+	}
+	if value, ok := guo.mutation.MetadataStruct(); ok {
+		_spec.SetField(group.FieldMetadataStruct, field.TypeJSON, value)
 	}
 	if guo.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
