@@ -30,10 +30,7 @@ func ToStructPbValue(v any) (*structpb.Value, error) {
 
 func FromStructPbValue(fro *structpb.Value, dst any) error {
 	v := fro.AsInterface()
-	if err := copy(v, &dst); err != nil {
-		return err
-	}
-	return mapstructure.Decode(v, dst)
+	return copy(v, &dst)
 }
 
 func isProtoMessage(in any) bool {
